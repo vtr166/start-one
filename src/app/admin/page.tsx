@@ -74,7 +74,7 @@ export default async function AdminDashboard() {
               {pedidosRecentes.length === 0 && (
                 <p className="p-6 text-[#555] text-sm">Nenhum pedido ainda.</p>
               )}
-              {pedidosRecentes.map((pedido) => {
+              {pedidosRecentes.map((pedido: typeof pedidosRecentes[number]) => {
                 const statusColor: Record<string, string> = {
                   APROVADO: 'text-green-400',
                   REJEITADO: 'text-red-400',
