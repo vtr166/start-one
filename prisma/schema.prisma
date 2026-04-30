@@ -1,0 +1,103 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Produto {
+  id           String    @id @default(cuid())
+  nome         String
+  slug         String    @unique
+  descricao    String
+  marca        String
+  categoria    Categoria
+  genero       Genero    @default(UNISSEX)
+  notasTopo    String?
+  notasCoracao String?
+  notasBase    String?
+  imagens      String[]
+  ativo        Boolean   @default(true)
+  destaque     Boolean   @default(false)
+  criadoEm    DateTime  @default(now())
+  atualizadoEm DateTime @updatedAt
+
+  variacoes   Variacao[]
+  itensPedido ItemPedido[]
+}
+
+model Variacao {
+  id        String       @id @default(cuid())
+  produtoId String
+  tipo      TipoVariacao
+  volume    String
+  preco     Float
+  estoque   Int          @default(0)
+  ativo     Boolean      @default(true)
+
+  produto     Produto      @relation(fields: [produtoId], references: [id], onDelete: Cascade)
+  itensPedido ItemPedido[]
+}
+
+model Pedido {
+  id              String       @id @default(cuid())
+  status          StatusPedido @default(PENDENTE)
+  total           Float
+  mpPreferenceId  String?
+  mpPaymentId     String?
+  nomeCliente     String
+  emailCliente    String
+  telefoneCliente String?
+  criadoEm       DateTime     @default(now())
+  atualizadoEm   DateTime     @updatedAt
+
+  itens ItemPedido[]
+}
+
+model ItemPedido {
+  id           String @id @default(cuid())
+  pedidoId     String
+  produtoId    String
+  variacaoId   String
+  quantidade   Int
+  precoUnit    Float
+  nomeProduto  String
+  nomeVariacao String
+
+  pedido   Pedido   @relation(fields: [pedidoId], references: [id])
+  produto  Produto  @relation(fields: [produtoId], references: [id])
+  variacao Variacao @relation(fields: [variacaoId], references: [id])
+}
+
+model Admin {
+  id    String @id @default(cuid())
+  email String @unique
+  senha String
+  nome  String
+}
+
+enum Categoria {
+  ARABE
+  IMPORTADO
+}
+
+enum Genero {
+  MASCULINO
+  FEMININO
+  UNISSEX
+}
+
+enum TipoVariacao {
+  FRASCO
+  DECANT
+}
+
+enum StatusPedido {
+  PENDENTE
+  APROVADO
+  REJEITADO
+  CANCELADO
+  ENVIADO
+  ENTREGUE
+}
