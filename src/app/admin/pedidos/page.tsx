@@ -30,7 +30,7 @@ export default async function PedidosAdmin() {
             {pedidos.length === 0 && (
               <p className="p-6 text-[#555] text-sm">Nenhum pedido ainda.</p>
             )}
-            {pedidos.map((pedido) => (
+            {pedidos.map((pedido: typeof pedidos[number]) => (
               <div key={pedido.id} className="px-6 py-4">
                 <div className="flex items-start justify-between gap-4 flex-wrap">
                   <div>
@@ -59,7 +59,7 @@ export default async function PedidosAdmin() {
 
                 {/* Itens */}
                 <div className="mt-3 space-y-1">
-                  {pedido.itens.map((item) => (
+                  {pedido.itens.map((item: typeof pedido.itens[number]) => (
                     <p key={item.id} className="text-xs text-[#666]">
                       {item.quantidade}× {item.nomeProduto} — {item.nomeVariacao} ({formatPrice(item.precoUnit)})
                     </p>

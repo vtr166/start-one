@@ -30,7 +30,7 @@ export default async function ProdutosAdmin() {
             {produtos.length === 0 && (
               <p className="p-6 text-[#555] text-sm">Nenhum produto cadastrado.</p>
             )}
-            {produtos.map((p) => {
+            {produtos.map((p: typeof produtos[number]) => {
               const menorPreco = p.variacoes.sort((a, b) => a.preco - b.preco)[0]
               return (
                 <div key={p.id} className="flex items-center justify-between px-6 py-4 gap-4">
