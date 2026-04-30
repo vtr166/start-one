@@ -37,7 +37,7 @@ async function resolverItem(item: ItemReq): Promise<ItemReq> {
 
 export async function POST(req: NextRequest) {
   try {
-    const { itens, cliente, total } = await req.json()
+    const { itens, cliente, total, frete } = await req.json()
 
     if (!itens?.length) {
       return NextResponse.json({ erro: 'Carrinho vazio' }, { status: 400 })
@@ -62,6 +62,12 @@ export async function POST(req: NextRequest) {
         nomeCliente: cliente.nome,
         emailCliente: cliente.email,
         telefoneCliente: cliente.telefone ?? null,
+        cpfCliente: cpfLimpo,
+        cep: cliente.cep?.replace(/\D/g, '') ?? null,
+        enderecoEntrega: cliente.enderecoFormatado ?? null,
+        freteServico: frete?.nome ?? null,
+        freteEmpresa: frete?.empresa ?? null,
+        freteValor: frete?.preco ?? 0,
         itens: {
           create: itensResolvidos.map((item: ItemReq) => ({
             produtoId: item.produtoId,

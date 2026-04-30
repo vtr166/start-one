@@ -49,6 +49,12 @@ model Pedido {
   nomeCliente     String
   emailCliente    String
   telefoneCliente String?
+  cpfCliente      String?
+  cep             String?
+  enderecoEntrega String?
+  freteServico    String?
+  freteEmpresa    String?
+  freteValor      Float?       @default(0)
   criadoEm       DateTime     @default(now())
   atualizadoEm   DateTime     @updatedAt
 
