@@ -42,20 +42,17 @@ export default function Header() {
       <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between gap-4">
 
         {/* Logo */}
-        <Link href="/" className="flex items-center gap-2.5 shrink-0">
-          <div className="w-9 h-9 rounded-full overflow-hidden border border-[#C9A84C]/40 bg-[#111] flex items-center justify-center">
-            <Image
-              src="/logo.png"
-              alt="Start One Imports"
-              width={36}
-              height={36}
-              className="object-cover"
-              onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }}
-            />
-          </div>
-          <span className="font-bold text-base tracking-wide">
+        <Link href="/" className="flex items-center gap-2 shrink-0">
+          <Image
+            src="/logo.jpeg"
+            alt="Start One Imports"
+            width={44}
+            height={44}
+            className="object-contain rounded-full"
+          />
+          <span className="font-bold text-base tracking-wide hidden sm:inline">
             <span className="gold-text">Start One</span>
-            <span className="text-[#555] text-xs ml-1 hidden sm:inline">Imports</span>
+            <span className="text-[#555] text-xs ml-1">Imports</span>
           </span>
         </Link>
 

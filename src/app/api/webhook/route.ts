@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { MercadoPagoConfig, Payment } from 'mercadopago'
 import { prisma } from '@/lib/prisma'
-import { enviarEmailVendedor, enviarEmailComprador } from '@/lib/email'
+import { enviarEmailVendedor, enviarEmailComprador, enviarWhatsAppVendedor } from '@/lib/email'
 
 const client = new MercadoPagoConfig({
   accessToken: process.env.MP_ACCESS_TOKEN!,
@@ -60,6 +60,7 @@ export async function POST(req: NextRequest) {
       await Promise.allSettled([
         enviarEmailVendedor(dadosEmail),
         enviarEmailComprador(dadosEmail),
+        enviarWhatsAppVendedor(dadosEmail),
       ])
     }
 

@@ -1,5 +1,36 @@
 import { formatPrice } from './utils'
 
+export async function enviarWhatsAppVendedor(pedido: DadosPedido) {
+  const numero = process.env.SELLER_WHATSAPP?.replace(/\D/g, '')
+  if (!numero) return
+
+  const itensTexto = pedido.itens
+    .map(i => `• ${i.quantidade}× ${i.nomeProduto} (${i.nomeVariacao})`)
+    .join('\n')
+
+  const mensagem = encodeURIComponent(
+    `🛍️ *NOVO PEDIDO CONFIRMADO — Start One*\n\n` +
+    `*Pedido:* #${pedido.id.slice(-6).toUpperCase()}\n` +
+    `*Cliente:* ${pedido.nomeCliente}\n` +
+    `*WhatsApp:* ${pedido.telefoneCliente || 'não informado'}\n` +
+    `*Email:* ${pedido.emailCliente}\n\n` +
+    `*Itens:*\n${itensTexto}\n\n` +
+    (pedido.freteValor ? `*Frete (${pedido.freteServico}):* ${formatPrice(pedido.freteValor)}\n` : '') +
+    `*Total:* ${formatPrice(pedido.total)}\n\n` +
+    (pedido.enderecoEntrega ? `*Endereço:* ${pedido.enderecoEntrega}\n\n` : '') +
+    `Acesse o painel: lojastartone.com.br/admin`
+  )
+
+  // Usa a API do CallMeBot (gratuita para WhatsApp pessoal)
+  // O vendedor precisa ativar em: https://www.callmebot.com/blog/free-api-whatsapp-messages/
+  const apiKey = process.env.CALLMEBOT_API_KEY
+  if (!apiKey) return
+
+  await fetch(
+    `https://api.callmebot.com/whatsapp.php?phone=${numero}&text=${mensagem}&apikey=${apiKey}`
+  ).catch(() => {})
+}
+
 type ItemEmail = {
   nomeProduto: string
   nomeVariacao: string
