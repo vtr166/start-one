@@ -4,6 +4,7 @@ import './globals.css'
 import Header from '@/components/Header'
 import Footer from '@/components/Footer'
 import CarrinhoDrawer from '@/components/CarrinhoDrawer'
+import BotaoWhatsApp from '@/components/BotaoWhatsApp'
 
 const geist = Geist({
   variable: '--font-geist-sans',
@@ -29,6 +30,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <CarrinhoDrawer />
         <main className="flex-1">{children}</main>
         <Footer />
+        <BotaoWhatsApp />
       </body>
     </html>
   )

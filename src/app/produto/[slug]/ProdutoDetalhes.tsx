@@ -1,7 +1,6 @@
 'use client'
 
 import { useState } from 'react'
-import Image from 'next/image'
 import { ShoppingBag, Droplets, ChevronLeft } from 'lucide-react'
 import Link from 'next/link'
 import { formatPrice } from '@/lib/utils'
@@ -74,15 +73,13 @@ export default function ProdutoDetalhes({ produto }: { produto: Produto }) {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
         {/* Galeria */}
         <div className="space-y-3">
-          <div className="aspect-square rounded-2xl overflow-hidden bg-[#1A1A1A] border border-[#2A2A2A] relative">
+          <div className="aspect-square rounded-2xl overflow-hidden bg-[#1A1A1A] border border-[#2A2A2A] relative"
+            style={{ background: 'radial-gradient(ellipse at 50% 70%, #1e1a10 0%, #111 100%)' }}>
             {produto.imagens[imagemAtiva] ? (
-              <Image
+              <img
                 src={produto.imagens[imagemAtiva]}
                 alt={produto.nome}
-                fill
-                className="object-cover"
-                sizes="(max-width: 768px) 100vw, 50vw"
-                priority
+                className="w-full h-full object-contain p-6"
               />
             ) : (
               <div className="w-full h-full flex items-center justify-center text-[#333]">
@@ -101,7 +98,7 @@ export default function ProdutoDetalhes({ produto }: { produto: Produto }) {
                     imagemAtiva === i ? 'border-[#C9A84C]' : 'border-[#2A2A2A]'
                   }`}
                 >
-                  <Image src={img} alt="" width={64} height={64} className="object-cover w-full h-full" />
+                  <img src={img} alt="" className="object-contain w-full h-full" />
                 </button>
               ))}
             </div>

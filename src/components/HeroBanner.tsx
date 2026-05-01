@@ -1,7 +1,6 @@
 'use client'
 
 import Link from 'next/link'
-import Image from 'next/image'
 import { useEffect, useState } from 'react'
 import { ArrowRight, Gift, Droplets, Sparkles, Tag } from 'lucide-react'
 
@@ -169,12 +168,10 @@ export default function HeroBanner() {
               }}
             >
               <div className="relative" style={{ width: p.w, height: p.h + 40 }}>
-                <Image
+                <img
                   src={p.src}
                   alt={p.alt}
-                  fill
-                  sizes="200px"
-                  className="object-contain drop-shadow-2xl"
+                  className="w-full h-full object-contain drop-shadow-2xl"
                   style={{ filter: 'drop-shadow(0 20px 40px rgba(0,0,0,0.6))' }}
                 />
                 {/* Reflexo sutil */}
@@ -190,7 +187,7 @@ export default function HeroBanner() {
       <div className="md:hidden absolute top-4 right-4 flex gap-2 opacity-30 pointer-events-none">
         {s.produtos.slice(0, 2).map((p, i) => (
           <div key={i} className="relative" style={{ width: 60, height: 85 }}>
-            <Image src={p.src} alt={p.alt} fill className="object-contain" sizes="80px" />
+            <img src={p.src} alt={p.alt} className="w-full h-full object-contain" />
           </div>
         ))}
       </div>

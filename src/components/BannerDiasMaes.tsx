@@ -1,6 +1,5 @@
 'use client'
 
-import Image from 'next/image'
 import Link from 'next/link'
 import { useCarrinho } from '@/store/carrinho'
 import { formatPrice } from '@/lib/utils'
@@ -63,13 +62,13 @@ export default function BannerDiasMaes() {
             {/* Garrafa 2 (atrás) */}
             <div className="absolute bottom-0 right-6 md:right-14" style={{ zIndex: 1 }}>
               <div className="relative w-24 h-36 md:w-28 md:h-44" style={{ transform: 'rotate(8deg)' }}>
-                <Image src={YARA_IMG} alt="Yara 2" fill className="object-contain opacity-70 drop-shadow-xl" sizes="120px" />
+                <img src={YARA_IMG} alt="Yara 2" className="w-full h-full object-contain opacity-70 drop-shadow-xl" />
               </div>
             </div>
             {/* Garrafa 1 (frente) */}
             <div className="absolute bottom-0 left-6 md:left-8" style={{ zIndex: 2 }}>
               <div className="relative w-28 h-44 md:w-36 md:h-56" style={{ transform: 'rotate(-5deg)' }}>
-                <Image src={YARA_IMG} alt="Lattafa Yara" fill className="object-contain drop-shadow-2xl" sizes="150px" />
+                <img src={YARA_IMG} alt="Lattafa Yara" className="w-full h-full object-contain drop-shadow-2xl" />
               </div>
             </div>
 
