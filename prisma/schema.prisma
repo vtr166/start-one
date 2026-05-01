@@ -55,10 +55,13 @@ model Pedido {
   freteServico    String?
   freteEmpresa    String?
   freteValor      Float?       @default(0)
+  cupomId         String?
+  desconto        Float?       @default(0)
   criadoEm       DateTime     @default(now())
   atualizadoEm   DateTime     @updatedAt
 
-  itens ItemPedido[]
+  itens  ItemPedido[]
+  cupom  Cupom?       @relation(fields: [cupomId], references: [id])
 }
 
 model ItemPedido {
@@ -81,6 +84,41 @@ model Admin {
   email String @unique
   senha String
   nome  String
+}
+
+model Afiliado {
+  id        String   @id @default(cuid())
+  nome      String
+  email     String?
+  whatsapp  String?
+  comissao  Float    @default(10)   // % comissão ex: 10 = 10%
+  ativo     Boolean  @default(true)
+  criadoEm DateTime @default(now())
+
+  cupons Cupom[]
+}
+
+model Cupom {
+  id          String    @id @default(cuid())
+  codigo      String    @unique
+  tipo        TipoCupom @default(PERCENTUAL)
+  valor       Float                          // 10 = 10% ou R$10
+  minPedido   Float?                         // valor mínimo do pedido
+  maxUsos     Int?                           // null = ilimitado
+  usosAtuais  Int       @default(0)
+  ativo       Boolean   @default(true)
+  expiresAt   DateTime?
+  descricao   String?
+  criadoEm   DateTime  @default(now())
+
+  afiliadoId String?
+  afiliado   Afiliado? @relation(fields: [afiliadoId], references: [id])
+  pedidos    Pedido[]
+}
+
+enum TipoCupom {
+  PERCENTUAL
+  FIXO
 }
 
 enum Categoria {

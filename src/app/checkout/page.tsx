@@ -5,7 +5,7 @@ import { useCarrinho, calcularDescontoDecants, calcularDescontoYara } from '@/st
 import { formatPrice } from '@/lib/utils'
 import {
   ShoppingBag, Loader2, Tag, Copy, Check, CheckCircle,
-  QrCode, Clock, Truck, MapPin, ChevronRight,
+  QrCode, Clock, Truck, MapPin, ChevronRight, X,
 } from 'lucide-react'
 import Image from 'next/image'
 import type { OpcaoFrete } from '@/app/api/frete/route'
@@ -53,6 +53,13 @@ export default function CheckoutPage() {
   const [buscandoCEP, setBuscandoCEP]       = useState(false)
   const [buscandoFrete, setBuscandoFrete]   = useState(false)
   const cepBuscadoRef = useRef('')
+
+  // Cupom
+  type CupomAplicado = { id: string; codigo: string; tipo: string; valor: number; desconto: number; afiliado: string | null }
+  const [codigoCupom, setCodigoCupom]       = useState('')
+  const [cupomAplicado, setCupomAplicado]   = useState<CupomAplicado | null>(null)
+  const [cupomErro, setCupomErro]           = useState('')
+  const [validandoCupom, setValidandoCupom] = useState(false)
 
   // Peso estimado baseado nos itens
   const pesoEstimado = itens.reduce((acc, i) => {
@@ -117,7 +124,25 @@ export default function CheckoutPage() {
     return () => clearInterval(t)
   }, [fase, verificarStatus])
 
-  const totalComFrete = total() + (freteSelecionado?.preco ?? 0)
+  async function aplicarCupom() {
+    const cod = codigoCupom.trim().toUpperCase()
+    if (!cod) return
+    setValidandoCupom(true)
+    setCupomErro('')
+    try {
+      const base = total() + (freteSelecionado?.preco ?? 0)
+      const res  = await fetch(`/api/cupom?codigo=${cod}&total=${base}`)
+      const data = await res.json()
+      if (!res.ok) { setCupomErro(data.erro); return }
+      setCupomAplicado(data)
+    } catch { setCupomErro('Erro ao validar cupom') }
+    finally { setValidandoCupom(false) }
+  }
+
+  function removerCupom() { setCupomAplicado(null); setCodigoCupom(''); setCupomErro('') }
+
+  const totalComFrete  = total() + (freteSelecionado?.preco ?? 0)
+  const totalComDesconto = totalComFrete - (cupomAplicado?.desconto ?? 0)
 
   async function handleCheckout(e: React.FormEvent) {
     e.preventDefault()
@@ -134,8 +159,9 @@ export default function CheckoutPage() {
         body: JSON.stringify({
           itens,
           cliente: { ...form, enderecoFormatado },
-          total: totalComFrete,
+          total: totalComDesconto,
           frete: freteSelecionado,
+          cupom: cupomAplicado,
         }),
       })
       const data = await res.json()
@@ -345,6 +371,47 @@ export default function CheckoutPage() {
             </div>
           )}
 
+          {/* Cupom de desconto */}
+          <div>
+            <h2 className="text-sm font-bold uppercase tracking-widest text-[#C9A84C] mb-4 flex items-center gap-2">
+              <Tag size={14} /> Cupom de desconto
+            </h2>
+            {cupomAplicado ? (
+              <div className="flex items-center justify-between p-3 rounded-xl border border-green-500/30 bg-green-500/10">
+                <div>
+                  <p className="text-sm font-bold text-green-400 flex items-center gap-1.5">
+                    <Check size={14} /> {cupomAplicado.codigo}
+                    {cupomAplicado.afiliado && <span className="text-xs font-normal text-[#888]">· {cupomAplicado.afiliado}</span>}
+                  </p>
+                  <p className="text-xs text-green-300 mt-0.5">
+                    {cupomAplicado.tipo === 'PERCENTUAL' ? `${cupomAplicado.valor}% de desconto` : `R$ ${cupomAplicado.valor.toFixed(2)} de desconto`}
+                    {' '}— economizando <strong>{formatPrice(cupomAplicado.desconto)}</strong>
+                  </p>
+                </div>
+                <button type="button" onClick={removerCupom}
+                  className="p-1.5 rounded-lg text-[#888] hover:text-red-400 transition-colors">
+                  <X size={14} />
+                </button>
+              </div>
+            ) : (
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  placeholder="Código do cupom"
+                  value={codigoCupom}
+                  onChange={e => { setCodigoCupom(e.target.value.toUpperCase()); setCupomErro('') }}
+                  onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), aplicarCupom())}
+                  className="flex-1 bg-[#111] border border-[#2A2A2A] rounded-lg px-4 py-3 text-sm text-[#F5F5F5] placeholder-[#444] focus:outline-none focus:border-[#C9A84C] transition-colors uppercase"
+                />
+                <button type="button" onClick={aplicarCupom} disabled={validandoCupom || !codigoCupom.trim()}
+                  className="px-4 py-3 rounded-lg text-sm font-bold bg-[#1A1A1A] border border-[#2A2A2A] text-[#C9A84C] hover:border-[#C9A84C] transition-colors disabled:opacity-40 shrink-0">
+                  {validandoCupom ? <Loader2 size={14} className="animate-spin" /> : 'Aplicar'}
+                </button>
+              </div>
+            )}
+            {cupomErro && <p className="text-red-400 text-xs mt-2">{cupomErro}</p>}
+          </div>
+
           {erro && (
             <p className="text-red-400 text-sm bg-red-400/10 border border-red-400/20 rounded-lg px-4 py-3">{erro}</p>
           )}
@@ -353,7 +420,7 @@ export default function CheckoutPage() {
             className="btn-gold w-full flex items-center justify-center gap-2 py-4 disabled:opacity-50">
             {carregando
               ? <><Loader2 size={16} className="animate-spin" /> Gerando PIX...</>
-              : <><QrCode size={16} /> Gerar QR Code PIX — {formatPrice(totalComFrete)}</>
+              : <><QrCode size={16} /> Gerar QR Code PIX — {formatPrice(totalComDesconto)}</>
             }
           </button>
           <p className="text-xs text-[#555] text-center">Pagamento 100% seguro via Mercado Pago · PIX aprovado na hora</p>
@@ -401,9 +468,18 @@ export default function CheckoutPage() {
                   <span>{formatPrice(freteSelecionado.preco)}</span>
                 </div>
               )}
+              {cupomAplicado && (
+                <div className="flex justify-between text-xs text-green-400">
+                  <span className="flex items-center gap-1"><Tag size={11} /> Cupom {cupomAplicado.codigo}</span>
+                  <span>- {formatPrice(cupomAplicado.desconto)}</span>
+                </div>
+              )}
               <div className="flex justify-between items-center pt-1 border-t border-[#2A2A2A]">
                 <span className="text-sm font-bold text-[#F5F5F5]">Total</span>
-                <span className="text-xl font-bold text-[#C9A84C]">{formatPrice(totalComFrete)}</span>
+                <div className="text-right">
+                  {cupomAplicado && <p className="text-xs text-[#555] line-through">{formatPrice(totalComFrete)}</p>}
+                  <span className="text-xl font-bold text-[#C9A84C]">{formatPrice(totalComDesconto)}</span>
+                </div>
               </div>
             </div>
           </div>

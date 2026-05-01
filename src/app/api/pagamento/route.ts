@@ -50,7 +50,7 @@ async function resolverItem(item: ItemReq): Promise<ItemReq> {
 
 export async function POST(req: NextRequest) {
   try {
-    const { itens, cliente, total, frete } = await req.json()
+    const { itens, cliente, total, frete, cupom } = await req.json()
 
     if (!itens?.length) {
       return NextResponse.json({ erro: 'Carrinho vazio' }, { status: 400 })
@@ -81,6 +81,8 @@ export async function POST(req: NextRequest) {
         freteServico: frete?.nome ?? null,
         freteEmpresa: frete?.empresa ?? null,
         freteValor: frete?.preco ?? 0,
+        cupomId: cupom?.id ?? null,
+        desconto: cupom?.desconto ?? 0,
         itens: {
           create: itensResolvidos.map((item: ItemReq) => ({
             produtoId: item.produtoId,
@@ -93,6 +95,14 @@ export async function POST(req: NextRequest) {
         },
       },
     })
+
+    // Incrementa usos do cupom
+    if (cupom?.id) {
+      await prisma.cupom.update({
+        where: { id: cupom.id },
+        data:  { usosAtuais: { increment: 1 } },
+      })
+    }
 
     const baseUrl = process.env.NEXTAUTH_URL ?? 'https://localhost:3000'
 
