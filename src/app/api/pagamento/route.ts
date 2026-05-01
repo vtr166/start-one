@@ -18,18 +18,31 @@ type ItemReq = {
 
 // Resolve IDs falsos do kit Yara para IDs reais do banco
 async function resolverItem(item: ItemReq): Promise<ItemReq> {
-  if (item.produtoId !== 'yara-promo') return item
+  if (item.produtoId === 'yara-promo') {
+    const yara = await prisma.produto.findFirst({
+      where: {
+        nome: { contains: 'Yara', mode: 'insensitive' },
+        NOT: { nome: { contains: 'Candy', mode: 'insensitive' } },
+        variacoes: { some: { tipo: 'FRASCO', ativo: true } },
+      },
+      include: { variacoes: { where: { tipo: 'FRASCO', ativo: true }, take: 1 } },
+    })
+    if (yara?.variacoes[0]) {
+      return { ...item, produtoId: yara.id, variacaoId: yara.variacoes[0].id }
+    }
+  }
 
-  const yara = await prisma.produto.findFirst({
-    where: {
-      nome: { contains: 'Yara', mode: 'insensitive' },
-      variacoes: { some: { tipo: 'FRASCO', ativo: true } },
-    },
-    include: { variacoes: { where: { tipo: 'FRASCO', ativo: true }, take: 1 } },
-  })
-
-  if (yara?.variacoes[0]) {
-    return { ...item, produtoId: yara.id, variacaoId: yara.variacoes[0].id }
+  if (item.produtoId === 'yara-candy-promo') {
+    const candy = await prisma.produto.findFirst({
+      where: {
+        nome: { contains: 'Yara Candy', mode: 'insensitive' },
+        variacoes: { some: { tipo: 'FRASCO', ativo: true } },
+      },
+      include: { variacoes: { where: { tipo: 'FRASCO', ativo: true }, take: 1 } },
+    })
+    if (candy?.variacoes[0]) {
+      return { ...item, produtoId: candy.id, variacaoId: candy.variacoes[0].id }
+    }
   }
 
   return item
