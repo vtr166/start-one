@@ -144,6 +144,12 @@ export default function CheckoutPage() {
   const totalComFrete  = total() + (freteSelecionado?.preco ?? 0)
   const totalComDesconto = totalComFrete - (cupomAplicado?.desconto ?? 0)
 
+  // Lê cookie do afiliado (rastreamento por link ?ref=slug)
+  function lerCookieAfiliado(): string | null {
+    const match = document.cookie.match(/(?:^|;\s*)affiliate_ref=([^;]+)/)
+    return match ? decodeURIComponent(match[1]) : null
+  }
+
   async function handleCheckout(e: React.FormEvent) {
     e.preventDefault()
     if (!freteSelecionado) { setErro('Selecione uma opção de frete'); return }
@@ -151,6 +157,7 @@ export default function CheckoutPage() {
     setErro('')
 
     const enderecoFormatado = `${form.rua}, ${form.numero}${form.complemento ? `, ${form.complemento}` : ''} — ${form.bairro}, ${form.cidade} - ${form.estado}, ${form.cep}`
+    const afiliadoRef = lerCookieAfiliado()
 
     try {
       const res = await fetch('/api/pagamento', {
@@ -162,6 +169,7 @@ export default function CheckoutPage() {
           total: totalComDesconto,
           frete: freteSelecionado,
           cupom: cupomAplicado,
+          afiliadoRef,
         }),
       })
       const data = await res.json()

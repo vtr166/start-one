@@ -57,11 +57,13 @@ model Pedido {
   freteValor      Float?       @default(0)
   cupomId         String?
   desconto        Float?       @default(0)
+  afiliadoId      String?      // rastreamento por link (?ref=)
   criadoEm       DateTime     @default(now())
   atualizadoEm   DateTime     @updatedAt
 
-  itens  ItemPedido[]
-  cupom  Cupom?       @relation(fields: [cupomId], references: [id])
+  itens     ItemPedido[]
+  cupom     Cupom?    @relation(fields: [cupomId], references: [id])
+  afiliado  Afiliado? @relation("PedidoAfiliado", fields: [afiliadoId], references: [id], onDelete: SetNull)
 }
 
 model ItemPedido {
@@ -88,14 +90,30 @@ model Admin {
 
 model Afiliado {
   id        String   @id @default(cuid())
+  slug      String?  @unique  // usado na URL: ?ref=larissa
   nome      String
   email     String?
   whatsapp  String?
-  comissao  Float    @default(10)   // % comissão ex: 10 = 10%
+  comissao  Float    @default(10)
   ativo     Boolean  @default(true)
   criadoEm DateTime @default(now())
 
-  cupons Cupom[]
+  cupons          Cupom[]
+  pedidos         Pedido[]          @relation("PedidoAfiliado")
+  comissoesPagas  ComissaoPaga[]
+}
+
+model ComissaoPaga {
+  id            String   @id @default(cuid())
+  afiliadoId    String
+  valor         Float
+  periodoLabel  String   // ex: "Maio 2025"
+  periodoInicio DateTime
+  periodoFim    DateTime
+  observacao    String?
+  criadoEm     DateTime @default(now())
+
+  afiliado Afiliado @relation(fields: [afiliadoId], references: [id], onDelete: Cascade)
 }
 
 model Cupom {

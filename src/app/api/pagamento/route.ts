@@ -50,7 +50,7 @@ async function resolverItem(item: ItemReq): Promise<ItemReq> {
 
 export async function POST(req: NextRequest) {
   try {
-    const { itens, cliente, total, frete, cupom } = await req.json()
+    const { itens, cliente, total, frete, cupom, afiliadoRef } = await req.json()
 
     if (!itens?.length) {
       return NextResponse.json({ erro: 'Carrinho vazio' }, { status: 400 })
@@ -63,6 +63,16 @@ export async function POST(req: NextRequest) {
     const cpfLimpo = String(cliente.cpf).replace(/\D/g, '')
     if (cpfLimpo.length !== 11) {
       return NextResponse.json({ erro: 'CPF inválido' }, { status: 400 })
+    }
+
+    // Resolve slug do afiliado (rastreamento por link ?ref=slug)
+    let afiliadoId: string | null = null
+    if (afiliadoRef) {
+      const afiliado = await prisma.afiliado.findUnique({
+        where: { slug: String(afiliadoRef) },
+        select: { id: true, ativo: true },
+      })
+      if (afiliado?.ativo) afiliadoId = afiliado.id
     }
 
     // Resolve IDs fake (kit Yara) para IDs reais
@@ -83,6 +93,7 @@ export async function POST(req: NextRequest) {
         freteValor: frete?.preco ?? 0,
         cupomId: cupom?.id ?? null,
         desconto: cupom?.desconto ?? 0,
+        afiliadoId,
         itens: {
           create: itensResolvidos.map((item: ItemReq) => ({
             produtoId: item.produtoId,
