@@ -4,6 +4,15 @@ import Link from 'next/link'
 import { useEffect, useState, useCallback } from 'react'
 import { ChevronRight, Droplets, ShoppingBag, Sparkles } from 'lucide-react'
 
+/* ─── Tipo banner do banco ─────────────────────────────────── */
+type BannerDB = {
+  id: string; badge: string | null; titulo1: string; titulo2: string; subtitulo: string | null
+  imagemUrl: string; acento: string; glow: string; overlay: string
+  ctaLabel: string | null; ctaHref: string | null; ctaSecLabel: string | null; ctaSecHref: string | null
+  stat1n: string | null; stat1label: string | null; stat2n: string | null; stat2label: string | null
+  stat3n: string | null; stat3label: string | null
+}
+
 /* ─── Fotos reais do Unsplash ──────────────────────────────────
    Licença Unsplash — uso comercial gratuito permitido           */
 const FOTO_FEM  = 'https://images.unsplash.com/photo-1595425959632-34f2822322ce?auto=format&fit=crop&w=1920&q=85'
@@ -20,7 +29,7 @@ const SLIDES = [
     acento: '#f9a8d4',
     glow: '#ec4899',
     badge: '🌸 Mais Vendido',
-    titulo: ['O cheiro que', 'elas não esquecem.'],
+    titulo1: 'O cheiro que', titulo2: 'elas não esquecem.',
     sub: 'Lattafa Yara EDP — doce, tropical, fixação de 8h+.\nO favorito absoluto das brasileiras.',
     preco: 'Frasco a partir de R$ 199 · Decant R$ 22',
     cta:    { label: 'Comprar Yara',        href: '/produto/lattafa-yara', icon: <ShoppingBag size={15}/> },
@@ -40,7 +49,7 @@ const SLIDES = [
     acento: '#93c5fd',
     glow: '#3b82f6',
     badge: '🔵 Para Ele',
-    titulo: ['Luxo árabe no', 'seu pescoço.'],
+    titulo1: 'Luxo árabe no', titulo2: 'seu pescoço.',
     sub: 'Club de Nuit, Asad e Hawas — projeção real,\nfixação poderosa, elegância que impressiona.',
     preco: 'Decants a partir de R$ 22 · Frascos R$ 189+',
     cta:    { label: 'Ver masculinos',    href: '/?genero=MASCULINO', icon: <ShoppingBag size={15}/> },
@@ -60,7 +69,7 @@ const SLIDES = [
     acento: '#fde68a',
     glow: '#d97706',
     badge: '💧 Decants Originais',
-    titulo: ['Experimente antes', 'de comprar.'],
+    titulo1: 'Experimente antes', titulo2: 'de comprar.',
     sub: 'Decants de 5ml retirados dos frascos originais.\nKit 3 pague 2 — experimente sem compromisso.',
     preco: 'Kit 3 decants — pague só 2 · a partir de R$ 44',
     cta:    { label: 'Montar meu kit',       href: '/decants', icon: <Sparkles size={15}/> },
@@ -74,9 +83,40 @@ const SLIDES = [
 ]
 
 export default function HeroBanner() {
-  const [idx, setIdx]       = useState(0)
-  const [saindo, setSaindo] = useState(false)
-  const [prog, setProg]     = useState(0)
+  const [idx, setIdx]           = useState(0)
+  const [saindo, setSaindo]     = useState(false)
+  const [prog, setProg]         = useState(0)
+  const [bannersDB, setBannersDB] = useState<BannerDB[]>([])
+
+  // Busca banners do banco — usa fallback hardcoded se vazio
+  useEffect(() => {
+    fetch('/api/banners').then(r => r.json()).then((data: BannerDB[]) => {
+      if (Array.isArray(data) && data.length > 0) setBannersDB(data)
+    }).catch(() => {})
+  }, [])
+
+  // Slides ativos: banco ou hardcoded
+  const slidesAtivos = bannersDB.length > 0
+    ? bannersDB.map(b => ({
+        id:      b.id,
+        foto:    b.imagemUrl,
+        overlay: b.overlay,
+        acento:  b.acento,
+        glow:    b.glow,
+        badge:   b.badge ?? '',
+        titulo1: b.titulo1,
+        titulo2: b.titulo2,
+        sub:     b.subtitulo ?? '',
+        preco:   '',
+        cta:     { label: b.ctaLabel ?? 'Ver produtos', href: b.ctaHref ?? '/', icon: <ShoppingBag size={15}/> },
+        ctaSec:  { label: b.ctaSecLabel ?? 'Ver decants', href: b.ctaSecHref ?? '/decants', icon: <Droplets size={14}/> },
+        stats: [
+          b.stat1n ? { n: b.stat1n, label: b.stat1label ?? '' } : null,
+          b.stat2n ? { n: b.stat2n, label: b.stat2label ?? '' } : null,
+          b.stat3n ? { n: b.stat3n, label: b.stat3label ?? '' } : null,
+        ].filter(Boolean) as { n: string; label: string }[],
+      }))
+    : SLIDES
 
   const trocar = useCallback((next: number) => {
     if (next === idx) return
@@ -85,18 +125,25 @@ export default function HeroBanner() {
   }, [idx])
 
   useEffect(() => {
+    setIdx(0) // reset ao trocar fonte
+  }, [bannersDB.length])
+
+  useEffect(() => {
+    const total = slidesAtivos.length
+    if (total <= 1) return
     const TICK = 80
     const inc  = (TICK / 7000) * 100
     const t = setInterval(() => {
       setProg(p => {
-        if (p >= 100) { trocar((idx + 1) % SLIDES.length); return 0 }
+        if (p >= 100) { trocar((idx + 1) % total); return 0 }
         return p + inc
       })
     }, TICK)
     return () => clearInterval(t)
-  }, [idx, trocar])
+  }, [idx, trocar, slidesAtivos.length])
 
-  const s = SLIDES[idx]
+  const s = slidesAtivos[idx] ?? slidesAtivos[0]
+  if (!s) return null
 
   return (
     <section
@@ -135,20 +182,14 @@ export default function HeroBanner() {
         </div>
 
         {/* Headline */}
-        {s.titulo.map((linha, i) => (
-          <h1
-            key={i}
-            className="font-black leading-[0.87] tracking-tight drop-shadow-2xl"
-            style={{
-              fontSize: 'clamp(3rem, 7vw, 5.8rem)',
-              color: i === 0 ? '#ffffff' : s.acento,
-              textShadow: i === 1 ? `0 0 100px ${s.glow}bb` : '0 2px 30px rgba(0,0,0,0.7)',
-              marginBottom: i === s.titulo.length - 1 ? '1.75rem' : '0.1rem',
-            }}
-          >
-            {linha}
-          </h1>
-        ))}
+        <h1 className="font-black leading-[0.87] tracking-tight drop-shadow-2xl text-white mb-0.5"
+          style={{ fontSize: 'clamp(3rem, 7vw, 5.8rem)', textShadow: '0 2px 30px rgba(0,0,0,0.7)' }}>
+          {s.titulo1}
+        </h1>
+        <h1 className="font-black leading-[0.87] tracking-tight drop-shadow-2xl mb-7"
+          style={{ fontSize: 'clamp(3rem, 7vw, 5.8rem)', color: s.acento, textShadow: `0 0 100px ${s.glow}bb` }}>
+          {s.titulo2}
+        </h1>
 
         {/* Subtítulo */}
         <p
@@ -220,7 +261,7 @@ export default function HeroBanner() {
         >
           {/* Dots */}
           <div className="flex items-center gap-2.5">
-            {SLIDES.map((sl, i) => (
+            {slidesAtivos.map((sl, i) => (
               <button
                 key={sl.id}
                 onClick={() => trocar(i)}
@@ -237,17 +278,19 @@ export default function HeroBanner() {
 
           {/* Label slide atual */}
           <span className="text-[11px] text-[#666] hidden md:block font-medium tracking-wider uppercase">
-            {String(idx + 1).padStart(2, '0')} / {String(SLIDES.length).padStart(2, '0')}
+            {String(idx + 1).padStart(2, '0')} / {String(slidesAtivos.length).padStart(2, '0')}
           </span>
 
           {/* Próximo */}
-          <button
-            onClick={() => trocar((idx + 1) % SLIDES.length)}
-            className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-widest transition-opacity hover:opacity-100 opacity-60"
-            style={{ color: s.acento }}
-          >
-            Próximo <ChevronRight size={13} />
-          </button>
+          {slidesAtivos.length > 1 && (
+            <button
+              onClick={() => trocar((idx + 1) % slidesAtivos.length)}
+              className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-widest transition-opacity hover:opacity-100 opacity-60"
+              style={{ color: s.acento }}
+            >
+              Próximo <ChevronRight size={13} />
+            </button>
+          )}
         </div>
       </div>
 

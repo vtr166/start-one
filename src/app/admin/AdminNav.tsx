@@ -2,14 +2,16 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { LayoutDashboard, Package, ShoppingBag, Tag, Users, LogOut } from 'lucide-react'
+import { LayoutDashboard, Package, ShoppingBag, Tag, Users, Image, Percent, LogOut } from 'lucide-react'
 
 const links = [
-  { href: '/admin',           label: 'Dashboard',  icon: LayoutDashboard },
-  { href: '/admin/pedidos',   label: 'Pedidos',     icon: ShoppingBag },
-  { href: '/admin/produtos',  label: 'Produtos',    icon: Package },
-  { href: '/admin/cupons',    label: 'Cupons',      icon: Tag },
-  { href: '/admin/afiliados', label: 'Afiliados',   icon: Users },
+  { href: '/admin',            label: 'Dashboard',  icon: LayoutDashboard },
+  { href: '/admin/pedidos',    label: 'Pedidos',     icon: ShoppingBag },
+  { href: '/admin/produtos',   label: 'Produtos',    icon: Package },
+  { href: '/admin/banners',    label: 'Banners',     icon: Image },
+  { href: '/admin/promocoes',  label: 'Promoções',   icon: Percent },
+  { href: '/admin/cupons',     label: 'Cupons',      icon: Tag },
+  { href: '/admin/afiliados',  label: 'Afiliados',   icon: Users },
 ]
 
 export default function AdminNav() {

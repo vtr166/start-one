@@ -121,6 +121,43 @@ enum TipoCupom {
   FIXO
 }
 
+model Banner {
+  id          String   @id @default(cuid())
+  badge       String?
+  titulo1     String
+  titulo2     String
+  subtitulo   String?
+  imagemUrl   String
+  acento      String   @default("#fde68a")
+  glow        String   @default("#d97706")
+  overlay     String   @default("linear-gradient(100deg,rgba(10,8,0,0.97) 0%,rgba(25,18,0,0.87) 38%,rgba(60,40,0,0.45) 65%,transparent 100%)")
+  ctaLabel    String?
+  ctaHref     String?
+  ctaSecLabel String?
+  ctaSecHref  String?
+  stat1n      String?
+  stat1label  String?
+  stat2n      String?
+  stat2label  String?
+  stat3n      String?
+  stat3label  String?
+  ativo       Boolean  @default(true)
+  ordem       Int      @default(0)
+  criadoEm   DateTime @default(now())
+}
+
+model Promocao {
+  id         String     @id @default(cuid())
+  nome       String
+  tipo       TipoCupom  @default(PERCENTUAL)
+  valor      Float
+  categoria  Categoria?
+  genero     Genero?
+  ativo      Boolean    @default(true)
+  expiresAt  DateTime?
+  criadoEm  DateTime   @default(now())
+}
+
 enum Categoria {
   ARABE
   IMPORTADO
