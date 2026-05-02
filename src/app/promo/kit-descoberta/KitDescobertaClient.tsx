@@ -1,9 +1,10 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useCarrinho } from '@/store/carrinho'
 import { formatPrice } from '@/lib/utils'
+import { pixelViewContent, pixelAddToCart } from '@/lib/pixel'
 import type { DecantInfo } from './page'
 import {
   ShoppingBag, Star, Shield, Truck, RefreshCw,
@@ -172,6 +173,11 @@ export default function KitDescobertaClient({ decants }: { decants: DecantInfo[]
   const [adicionando, setAdicionando]   = useState(false)
   const [filtroGenero, setFiltroGenero] = useState<string>('TODOS')
 
+  // ViewContent ao carregar a landing
+  useEffect(() => {
+    pixelViewContent({ contentName: 'Kit Descoberta', value: PRECO_KIT })
+  }, [])
+
   const qtdSelecionados = selecionados.length
   const completo        = qtdSelecionados === QTD_KIT
 
@@ -210,6 +216,12 @@ export default function KitDescobertaClient({ decants }: { decants: DecantInfo[]
         isDecant:     false,
       })
     }
+
+    // AddToCart — kit completo
+    pixelAddToCart({
+      value:       PRECO_KIT,
+      contentName: 'Kit Descoberta — 3 Decants',
+    })
 
     // Fecha o drawer que o adicionar() abre automaticamente e redireciona
     fecharCarrinho()

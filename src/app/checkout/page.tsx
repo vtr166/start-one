@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback, useRef, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { useCarrinho, calcularDescontoDecants, calcularDescontoYara } from '@/store/carrinho'
+import { pixelInitiateCheckout, pixelPurchase } from '@/lib/pixel'
 import { formatPrice } from '@/lib/utils'
 import {
   ShoppingBag, Loader2, Tag, Copy, Check, CheckCircle,
@@ -65,6 +66,13 @@ function CheckoutPageInner() {
   const [cupomAplicado, setCupomAplicado]   = useState<CupomAplicado | null>(null)
   const [cupomErro, setCupomErro]           = useState('')
   const [validandoCupom, setValidandoCupom] = useState(false)
+
+  // InitiateCheckout — dispara uma vez quando o checkout carrega com itens
+  useEffect(() => {
+    if (itens.length === 0) return
+    pixelInitiateCheckout({ value: total(), numItems: itens.reduce((a, i) => a + i.quantidade, 0) })
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   // Auto-aplica cupom passado via URL (?cupom=KITDESCOBERTA)
   useEffect(() => {
@@ -135,7 +143,12 @@ function CheckoutPageInner() {
     try {
       const res = await fetch(`/api/pedido-status?id=${pixData.pedidoId}`)
       const data = await res.json()
-      if (data.status === 'APROVADO') { limpar(); setPedidoAprovadoId(pixData.pedidoId); setFase('aprovado') }
+      if (data.status === 'APROVADO') {
+        pixelPurchase({ value: pixData.total, orderId: pixData.pedidoId })
+        limpar()
+        setPedidoAprovadoId(pixData.pedidoId)
+        setFase('aprovado')
+      }
     } catch { /* ignora */ }
   }, [pixData, limpar])
 
