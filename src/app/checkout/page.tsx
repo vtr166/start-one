@@ -144,8 +144,15 @@ export default function CheckoutPage() {
 
   function removerCupom() { setCupomAplicado(null); setCodigoCupom(''); setCupomErro('') }
 
-  const totalComFrete  = total() + (freteSelecionado?.preco ?? 0)
-  const totalComDesconto = totalComFrete - (cupomAplicado?.desconto ?? 0)
+  const FRETE_GRATIS_MINIMO = 250
+  const DESCONTO_PIX_PCT    = 5
+
+  const freteGratis    = total() >= FRETE_GRATIS_MINIMO
+  const freteEfetivo   = freteGratis ? 0 : (freteSelecionado?.preco ?? 0)
+  const totalComFrete  = total() + freteEfetivo
+  const descontoCupom  = cupomAplicado?.desconto ?? 0
+  const descontoPix    = metodoPag === 'pix' ? Math.round(totalComFrete * DESCONTO_PIX_PCT) / 100 : 0
+  const totalComDesconto = totalComFrete - descontoCupom - descontoPix
 
   // Lê cookie do afiliado (rastreamento por link ?ref=slug)
   function lerCookieAfiliado(): string | null {
@@ -496,6 +503,9 @@ export default function CheckoutPage() {
                 <QrCode size={22} className={metodoPag === 'pix' ? 'text-[#C9A84C]' : 'text-[#555]'} />
                 <span className={`text-xs font-bold ${metodoPag === 'pix' ? 'text-[#C9A84C]' : 'text-[#888]'}`}>PIX</span>
                 <span className="text-[10px] text-green-400 font-semibold">Aprovação imediata</span>
+                <span className="text-[10px] text-[#C9A84C] font-bold bg-[#C9A84C]/10 px-2 py-0.5 rounded-full">
+                  {DESCONTO_PIX_PCT}% OFF
+                </span>
               </button>
               <button type="button" onClick={() => setMetodoPag('cartao')}
                 className="flex flex-col items-center gap-1.5 p-4 rounded-xl border transition-all"
@@ -584,7 +594,11 @@ export default function CheckoutPage() {
               {freteSelecionado && (
                 <div className="flex justify-between text-xs text-[#888]">
                   <span className="flex items-center gap-1"><Truck size={11} /> {freteSelecionado.nome}</span>
-                  <span>{formatPrice(freteSelecionado.preco)}</span>
+                  {freteGratis ? (
+                    <span className="text-green-400 font-bold">Grátis 🎁</span>
+                  ) : (
+                    <span>{formatPrice(freteSelecionado.preco)}</span>
+                  )}
                 </div>
               )}
               {cupomAplicado && (
@@ -593,10 +607,18 @@ export default function CheckoutPage() {
                   <span>- {formatPrice(cupomAplicado.desconto)}</span>
                 </div>
               )}
+              {descontoPix > 0 && (
+                <div className="flex justify-between text-xs text-[#C9A84C]">
+                  <span className="flex items-center gap-1"><Tag size={11} /> Desconto PIX {DESCONTO_PIX_PCT}%</span>
+                  <span>- {formatPrice(descontoPix)}</span>
+                </div>
+              )}
               <div className="flex justify-between items-center pt-1 border-t border-[#2A2A2A]">
                 <span className="text-sm font-bold text-[#F5F5F5]">Total</span>
                 <div className="text-right">
-                  {cupomAplicado && <p className="text-xs text-[#555] line-through">{formatPrice(totalComFrete)}</p>}
+                  {(cupomAplicado || descontoPix > 0) && (
+                    <p className="text-xs text-[#555] line-through">{formatPrice(totalComFrete - descontoCupom)}</p>
+                  )}
                   <span className="text-xl font-bold text-[#C9A84C]">{formatPrice(totalComDesconto)}</span>
                 </div>
               </div>

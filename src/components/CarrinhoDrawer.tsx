@@ -9,6 +9,7 @@ import { useEffect, useRef } from 'react'
 
 const WA_NUMBER = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER ?? '5511999999999'
 const ABANDONO_MS = 10 * 60 * 1000 // 10 minutos
+const FRETE_GRATIS_MINIMO = 250 // R$250
 
 export default function CarrinhoDrawer() {
   const { itens, aberto, fecharCarrinho, remover, alterarQuantidade, subtotal, desconto, total } = useCarrinho()
@@ -149,6 +150,28 @@ export default function CarrinhoDrawer() {
         {/* Footer */}
         {itens.length > 0 && (
           <div className="px-6 py-4 border-t border-[#2A2A2A] space-y-3">
+
+            {/* Barra frete grátis */}
+            {(() => {
+              const totalAtual = total()
+              const faltaFrete = FRETE_GRATIS_MINIMO - totalAtual
+              if (faltaFrete <= 0) return (
+                <div className="p-3 rounded-xl bg-green-500/5 border border-green-500/20 flex items-center gap-2">
+                  <span className="text-xs font-bold text-green-400">🚚 Frete grátis desbloqueado!</span>
+                </div>
+              )
+              const pct = Math.min(100, (totalAtual / FRETE_GRATIS_MINIMO) * 100)
+              return (
+                <div className="p-3 rounded-xl bg-[#1A1A1A] border border-[#2A2A2A]">
+                  <p className="text-xs text-[#888] font-semibold mb-1.5">
+                    🚚 Falta <span className="text-[#C9A84C]">{formatPrice(faltaFrete)}</span> para frete grátis
+                  </p>
+                  <div className="h-1.5 bg-[#2A2A2A] rounded-full overflow-hidden">
+                    <div className="h-full bg-[#C9A84C] rounded-full transition-all" style={{ width: `${pct}%` }} />
+                  </div>
+                </div>
+              )
+            })()}
 
             {/* Barra de progresso do combo */}
             {faltamParaCombo > 0 && (

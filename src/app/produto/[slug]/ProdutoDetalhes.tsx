@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { ShoppingBag, Droplets, ChevronLeft, Share2, Truck, Star, X } from 'lucide-react'
 import Link from 'next/link'
 import { formatPrice } from '@/lib/utils'
@@ -165,6 +165,20 @@ export default function ProdutoDetalhes({ produto, relacionados }: Props) {
   const [variacaoSelecionada, setVariacaoSelecionada] = useState<Variacao>(produto.variacoes[0])
   const [adicionado, setAdicionado] = useState(false)
   const [compartilhado, setCompartilhado] = useState(false)
+  const [mostrarSticky, setMostrarSticky] = useState(false)
+  const botaoRef = useRef<HTMLButtonElement>(null)
+
+  // Detecta quando o botão principal sai da tela → mostra sticky bar no mobile
+  useEffect(() => {
+    const el = botaoRef.current
+    if (!el) return
+    const observer = new IntersectionObserver(
+      ([entry]) => setMostrarSticky(!entry.isIntersecting),
+      { threshold: 0 }
+    )
+    observer.observe(el)
+    return () => observer.disconnect()
+  }, [])
 
   const generoLabel: Record<string, string> = {
     MASCULINO: 'Masculino',
@@ -367,6 +381,7 @@ export default function ProdutoDetalhes({ produto, relacionados }: Props) {
 
               <div className="flex gap-2">
                 <button
+                  ref={botaoRef}
                   onClick={handleAdicionar}
                   className="btn-gold flex-1 flex items-center justify-center gap-2 text-sm"
                 >
@@ -389,6 +404,25 @@ export default function ProdutoDetalhes({ produto, relacionados }: Props) {
           <CalculadoraFrete pesoKg={pesoEstimado} />
         </div>
       </div>
+
+      {/* ── Sticky bar mobile ────────────────────────────────── */}
+      {mostrarSticky && variacaoSelecionada && (
+        <div className="fixed bottom-0 left-0 right-0 z-40 md:hidden bg-[#111]/95 backdrop-blur border-t border-[#2A2A2A] px-4 py-3 flex items-center gap-3 shadow-2xl">
+          <div className="flex-1 min-w-0">
+            <p className="text-xs text-[#888] truncate">{produto.nome}</p>
+            <p className="text-sm font-bold text-[#C9A84C]">
+              {formatPrice(variacaoSelecionada.precoFinal)}
+            </p>
+          </div>
+          <button
+            onClick={handleAdicionar}
+            className="btn-gold text-sm px-5 py-2.5 shrink-0 flex items-center gap-1.5"
+          >
+            <ShoppingBag size={15} />
+            {adicionado ? 'Adicionado ✓' : 'Comprar'}
+          </button>
+        </div>
+      )}
 
       {/* ── Produtos relacionados ─────────────────────────────── */}
       {relacionados.length > 0 && (

@@ -87,6 +87,13 @@ export default function ProdutoCard({ id, nome, slug, marca, categoria, imagens,
           </span>
         )}
 
+        {/* Badge estoque baixo */}
+        {!temDesconto && menorPreco && menorPreco.estoque > 0 && menorPreco.estoque <= 5 && (
+          <span className="absolute top-2 right-2 px-2 py-0.5 rounded-full text-[10px] font-bold bg-orange-500/90 text-white z-10 animate-pulse">
+            ⚡ {menorPreco.estoque} restantes
+          </span>
+        )}
+
         {/* Reflexo sutil embaixo */}
         <div className="absolute bottom-0 left-0 right-0 h-16 z-10"
           style={{ background: 'linear-gradient(to top, #0d0d0d, transparent)' }} />
