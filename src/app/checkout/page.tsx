@@ -5,12 +5,13 @@ import { useCarrinho, calcularDescontoDecants, calcularDescontoYara } from '@/st
 import { formatPrice } from '@/lib/utils'
 import {
   ShoppingBag, Loader2, Tag, Copy, Check, CheckCircle,
-  QrCode, Clock, Truck, MapPin, ChevronRight, X,
+  QrCode, Clock, Truck, MapPin, ChevronRight, X, CreditCard,
 } from 'lucide-react'
 import Image from 'next/image'
 import type { OpcaoFrete } from '@/app/api/frete/route'
+import CartaoForm from '@/components/CartaoForm'
 
-type Fase = 'form' | 'pix' | 'aprovado'
+type Fase = 'form' | 'pix' | 'cartao' | 'aprovado' | 'pendente'
 
 type PixData = {
   pedidoId: string
@@ -34,12 +35,13 @@ export default function CheckoutPage() {
   const combo     = calcularDescontoDecants(itens)
   const comboYara = calcularDescontoYara(itens)
 
-  const [fase, setFase]           = useState<Fase>('form')
-  const [pixData, setPixData]     = useState<PixData | null>(null)
+  const [fase, setFase]             = useState<Fase>('form')
+  const [pixData, setPixData]       = useState<PixData | null>(null)
   const [carregando, setCarregando] = useState(false)
-  const [erro, setErro]           = useState('')
-  const [copiado, setCopiado]     = useState(false)
-  const [segundos, setSegundos]   = useState(30 * 60)
+  const [erro, setErro]             = useState('')
+  const [copiado, setCopiado]       = useState(false)
+  const [segundos, setSegundos]     = useState(30 * 60)
+  const [metodoPag, setMetodoPag]   = useState<'pix' | 'cartao'>('pix')
 
   // Form
   const [form, setForm] = useState({
@@ -206,10 +208,21 @@ export default function CheckoutPage() {
   if (fase === 'aprovado') return (
     <div className="max-w-lg mx-auto px-4 py-24 text-center">
       <CheckCircle size={72} className="mx-auto mb-6 text-green-400" />
-      <h1 className="text-2xl font-bold text-[#F5F5F5] mb-3">PIX confirmado! 🎉</h1>
+      <h1 className="text-2xl font-bold text-[#F5F5F5] mb-3">Pagamento confirmado! 🎉</h1>
       <p className="text-[#888] text-sm mb-2 leading-relaxed">Você receberá a confirmação no e-mail informado em instantes.</p>
       <p className="text-[#888] text-sm mb-8">Entraremos em contato pelo WhatsApp para combinar a entrega.</p>
       <a href="/" className="btn-gold text-sm px-8 py-3 inline-block">Continuar comprando</a>
+    </div>
+  )
+
+  // ── Pendente (cartão em análise) ──────────────────────────
+  if (fase === 'pendente') return (
+    <div className="max-w-lg mx-auto px-4 py-24 text-center">
+      <Clock size={72} className="mx-auto mb-6 text-yellow-400" />
+      <h1 className="text-2xl font-bold text-[#F5F5F5] mb-3">Pagamento em análise</h1>
+      <p className="text-[#888] text-sm mb-2 leading-relaxed">Seu pagamento está sendo analisado pela operadora do cartão.</p>
+      <p className="text-[#888] text-sm mb-8">Você receberá um e-mail assim que for aprovado. Em caso de dúvidas, entre em contato pelo WhatsApp.</p>
+      <a href="/" className="btn-gold text-sm px-8 py-3 inline-block">Voltar à loja</a>
     </div>
   )
 
@@ -420,18 +433,68 @@ export default function CheckoutPage() {
             {cupomErro && <p className="text-red-400 text-xs mt-2">{cupomErro}</p>}
           </div>
 
+          {/* Método de pagamento */}
+          <div>
+            <h2 className="text-sm font-bold uppercase tracking-widest text-[#C9A84C] mb-4 flex items-center gap-2">
+              <CreditCard size={14} /> Forma de pagamento
+            </h2>
+            <div className="grid grid-cols-2 gap-3 mb-4">
+              <button type="button" onClick={() => setMetodoPag('pix')}
+                className="flex flex-col items-center gap-1.5 p-4 rounded-xl border transition-all"
+                style={{
+                  background: metodoPag === 'pix' ? '#C9A84C15' : '#111',
+                  borderColor: metodoPag === 'pix' ? '#C9A84C60' : '#2A2A2A',
+                }}>
+                <QrCode size={22} className={metodoPag === 'pix' ? 'text-[#C9A84C]' : 'text-[#555]'} />
+                <span className={`text-xs font-bold ${metodoPag === 'pix' ? 'text-[#C9A84C]' : 'text-[#888]'}`}>PIX</span>
+                <span className="text-[10px] text-green-400 font-semibold">Aprovação imediata</span>
+              </button>
+              <button type="button" onClick={() => setMetodoPag('cartao')}
+                className="flex flex-col items-center gap-1.5 p-4 rounded-xl border transition-all"
+                style={{
+                  background: metodoPag === 'cartao' ? '#C9A84C15' : '#111',
+                  borderColor: metodoPag === 'cartao' ? '#C9A84C60' : '#2A2A2A',
+                }}>
+                <CreditCard size={22} className={metodoPag === 'cartao' ? 'text-[#C9A84C]' : 'text-[#555]'} />
+                <span className={`text-xs font-bold ${metodoPag === 'cartao' ? 'text-[#C9A84C]' : 'text-[#888]'}`}>Cartão de crédito</span>
+                <span className="text-[10px] text-[#666]">Até 12x · juros do emissor</span>
+              </button>
+            </div>
+          </div>
+
           {erro && (
             <p className="text-red-400 text-sm bg-red-400/10 border border-red-400/20 rounded-lg px-4 py-3">{erro}</p>
           )}
 
-          <button type="submit" disabled={carregando || !freteSelecionado}
-            className="btn-gold w-full flex items-center justify-center gap-2 py-4 disabled:opacity-50">
-            {carregando
-              ? <><Loader2 size={16} className="animate-spin" /> Gerando PIX...</>
-              : <><QrCode size={16} /> Gerar QR Code PIX — {formatPrice(totalComDesconto)}</>
-            }
-          </button>
-          <p className="text-xs text-[#555] text-center">Pagamento 100% seguro via Mercado Pago · PIX aprovado na hora</p>
+          {metodoPag === 'pix' ? (
+            <>
+              <button type="submit" disabled={carregando || !freteSelecionado}
+                className="btn-gold w-full flex items-center justify-center gap-2 py-4 disabled:opacity-50">
+                {carregando
+                  ? <><Loader2 size={16} className="animate-spin" /> Gerando PIX...</>
+                  : <><QrCode size={16} /> Gerar QR Code PIX — {formatPrice(totalComDesconto)}</>
+                }
+              </button>
+              <p className="text-xs text-[#555] text-center">Pagamento 100% seguro via Mercado Pago · PIX aprovado na hora</p>
+            </>
+          ) : (
+            freteSelecionado ? (
+              <CartaoForm
+                total={totalComDesconto}
+                dadosPedido={{
+                  itens,
+                  cliente: { ...form, enderecoFormatado: `${form.rua}, ${form.numero}${form.complemento ? `, ${form.complemento}` : ''} — ${form.bairro}, ${form.cidade} - ${form.estado}, ${form.cep}` },
+                  frete: freteSelecionado,
+                  cupom: cupomAplicado,
+                  afiliadoRef: lerCookieAfiliado(),
+                }}
+                onSuccess={(pedidoId) => { limpar(); setFase('aprovado'); console.log('Pedido:', pedidoId) }}
+                onError={(msg) => setErro(msg)}
+              />
+            ) : (
+              <p className="text-xs text-[#888] text-center py-2">Informe o CEP para calcular o frete antes de pagar com cartão.</p>
+            )
+          )}
         </form>
 
         {/* Resumo */}

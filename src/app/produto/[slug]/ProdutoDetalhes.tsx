@@ -159,13 +159,11 @@ export default function ProdutoDetalhes({ produto }: { produto: Produto }) {
                 <button
                   key={v.id}
                   onClick={() => setVariacaoSelecionada(v)}
-                  disabled={v.estoque === 0}
                   className={`flex flex-col items-center px-4 py-3 rounded-xl border text-xs font-semibold transition-all
                     ${variacaoSelecionada?.id === v.id
                       ? 'border-[#C9A84C] bg-[#C9A84C]/10 text-[#C9A84C]'
                       : 'border-[#2A2A2A] text-[#888] hover:border-[#444]'
                     }
-                    ${v.estoque === 0 ? 'opacity-40 cursor-not-allowed line-through' : ''}
                   `}
                 >
                   <span className="flex items-center gap-1 mb-0.5">
@@ -175,7 +173,7 @@ export default function ProdutoDetalhes({ produto }: { produto: Produto }) {
                   <span className={variacaoSelecionada?.id === v.id ? 'text-[#C9A84C]' : 'text-[#F5F5F5]'}>
                     {formatPrice(v.preco)}
                   </span>
-                  {v.estoque === 0 && <span className="text-[10px] text-[#555]">Esgotado</span>}
+                  {v.estoque <= 0 && <span className="text-[10px] text-orange-400">Sob encomenda</span>}
                 </button>
               ))}
             </div>
@@ -188,9 +186,9 @@ export default function ProdutoDetalhes({ produto }: { produto: Produto }) {
                 <p className="text-3xl font-bold text-[#C9A84C]">
                   {formatPrice(variacaoSelecionada.preco)}
                 </p>
-                {variacaoSelecionada.estoque === 0 ? (
-                  <span className="text-xs font-bold text-red-400 bg-red-400/10 px-2 py-1 rounded-lg border border-red-400/20">
-                    Esgotado
+                {variacaoSelecionada.estoque <= 0 ? (
+                  <span className="text-xs font-bold text-orange-400 bg-orange-400/10 px-2 py-1 rounded-lg border border-orange-400/20">
+                    Sob encomenda
                   </span>
                 ) : variacaoSelecionada.estoque <= 3 ? (
                   <span className="text-xs font-bold text-orange-400 bg-orange-400/10 px-2 py-1 rounded-lg border border-orange-400/20 animate-pulse">
@@ -208,10 +206,7 @@ export default function ProdutoDetalhes({ produto }: { produto: Produto }) {
               </div>
               <button
                 onClick={handleAdicionar}
-                disabled={variacaoSelecionada.estoque === 0}
-                className={`btn-gold w-full flex items-center justify-center gap-2 text-sm ${
-                  variacaoSelecionada.estoque === 0 ? 'opacity-50 cursor-not-allowed' : ''
-                }`}
+                className="btn-gold w-full flex items-center justify-center gap-2 text-sm"
               >
                 <ShoppingBag size={16} />
                 {adicionado ? 'Adicionado ao carrinho ✓' : 'Adicionar ao Carrinho'}
