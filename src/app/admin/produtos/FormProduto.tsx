@@ -4,6 +4,7 @@ import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import { Plus, Trash2, Loader2, Package, Droplets } from 'lucide-react'
 import { salvarProduto } from './actions'
+import ImageUpload from './ImageUpload'
 
 type Variacao = {
   tipo: 'FRASCO' | 'DECANT'
@@ -45,6 +46,7 @@ function EstoqueBadge({ estoque }: { estoque: number }) {
 export default function FormProduto({ produto }: { produto?: Produto }) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
+  const [imagens, setImagens] = useState<string[]>(produto?.imagens ?? [])
   const [variacoes, setVariacoes] = useState<Variacao[]>(
     produto?.variacoes ?? [{ tipo: 'DECANT', volume: '5ml', preco: 22, estoque: 0 }]
   )
@@ -67,6 +69,7 @@ export default function FormProduto({ produto }: { produto?: Produto }) {
     e.preventDefault()
     const fd = new FormData(e.currentTarget)
     fd.set('variacoes', JSON.stringify(variacoes))
+    fd.set('imagens', imagens.join('\n'))   // sobrescreve o campo de imagens
     startTransition(async () => {
       await salvarProduto(fd)
       router.push('/admin/produtos')
@@ -134,10 +137,10 @@ export default function FormProduto({ produto }: { produto?: Produto }) {
       </div>
 
       <div>
-        <label className={label}>URLs das imagens (uma por linha)</label>
-        <textarea name="imagens" rows={3} defaultValue={produto?.imagens.join('\n') ?? ''}
-          placeholder="https://res.cloudinary.com/..." className={input} />
-        <p className="text-xs text-[#555] mt-1">Cole as URLs do Cloudinary após fazer o upload das fotos.</p>
+        <label className={label}>Fotos do produto</label>
+        <ImageUpload imagens={imagens} onChange={setImagens} />
+        {/* Campo hidden para o server action receber as URLs */}
+        <input type="hidden" name="imagens" value={imagens.join('\n')} />
       </div>
 
       <div className="flex items-center gap-3">
