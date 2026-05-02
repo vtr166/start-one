@@ -11,6 +11,7 @@ const navLinks = [
   { href: '/?categoria=ARABE', label: 'Árabes' },
   { href: '/?categoria=IMPORTADO', label: 'Importados' },
   { href: '/decants', label: '💧 Decants' },
+  { href: '/pedido/consulta', label: '📦 Rastrear' },
   { href: '/sobre', label: 'Sobre' },
   { href: '/faq', label: 'FAQ' },
 ]

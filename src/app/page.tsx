@@ -132,12 +132,47 @@ export default async function Home({ searchParams }: { searchParams: SearchParam
       : q ? `Resultados para "${q}"`
       : 'Catálogo'
 
+    // Filtros de gênero disponíveis quando navegando por categoria
+    const filtrosGenero = categoria ? [
+      { label: 'Todos',      genero: null,        emoji: '✨' },
+      { label: 'Masculino',  genero: 'MASCULINO', emoji: '🔵' },
+      { label: 'Feminino',   genero: 'FEMININO',  emoji: '🩷' },
+      { label: 'Unissex',    genero: 'UNISSEX',   emoji: '⚪' },
+    ] : []
+
     return (
       <div className="max-w-7xl mx-auto px-4 py-10">
-        <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center justify-between mb-5">
           <h1 className="text-xl font-bold text-[#F5F5F5]">{titulo}</h1>
           <Link href="/" className="text-xs text-[#C9A84C] hover:underline">← Voltar</Link>
         </div>
+
+        {/* Filtros de gênero — só aparece em páginas de categoria */}
+        {filtrosGenero.length > 0 && (
+          <div className="flex flex-wrap gap-2 mb-7">
+            {filtrosGenero.map((f) => {
+              const href = f.genero
+                ? `/?categoria=${categoria}&genero=${f.genero}`
+                : `/?categoria=${categoria}`
+              const ativo = f.genero ? genero === f.genero : !genero
+              return (
+                <Link
+                  key={f.label}
+                  href={href}
+                  className={`flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-semibold border transition-colors ${
+                    ativo
+                      ? 'bg-[#C9A84C] text-[#0A0A0A] border-[#C9A84C]'
+                      : 'bg-transparent text-[#888] border-[#2A2A2A] hover:border-[#C9A84C] hover:text-[#C9A84C]'
+                  }`}
+                >
+                  <span>{f.emoji}</span>
+                  {f.label}
+                </Link>
+              )
+            })}
+          </div>
+        )}
+
         {filtradosEnriquecidos.length === 0 ? (
           <div className="text-center py-24 text-[#555]">
             <p className="text-lg mb-2">Nenhum produto encontrado</p>
