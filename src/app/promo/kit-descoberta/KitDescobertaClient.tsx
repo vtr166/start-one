@@ -166,7 +166,7 @@ function DecantCard({
 /* ─── Componente principal ────────────────────────────────── */
 export default function KitDescobertaClient({ decants }: { decants: DecantInfo[] }) {
   const router = useRouter()
-  const { adicionar, fecharCarrinho, itens } = useCarrinho()
+  const { adicionar, fecharCarrinho, limpar, itens } = useCarrinho()
 
   const [selecionados, setSelecionados] = useState<string[]>([])
   const [adicionando, setAdicionando]   = useState(false)
@@ -193,22 +193,22 @@ export default function KitDescobertaClient({ decants }: { decants: DecantInfo[]
     if (!completo || adicionando) return
     setAdicionando(true)
 
+    // Limpa o carrinho antes — a landing page tem seu próprio checkout
+    limpar()
+
     for (const d of decantsSelecionados) {
-      const jaNoCarrinho = itens.find(i => i.variacaoId === d.variacaoId)
-      if (!jaNoCarrinho) {
-        adicionar({
-          variacaoId:   d.variacaoId,
-          produtoId:    d.produtoId,
-          nomeProduto:  d.nome,
-          nomeVariacao: `Decant 5ml`,
-          preco:        d.preco,
-          quantidade:   1,
-          imagem:       d.imagem || IMAGENS_FALLBACK[d.nome] || '',
-          // isDecant: false → não aciona o desconto combo 3x2
-          // o cupom KITDESCOBERTA já contempla o desconto exclusivo do kit
-          isDecant:     false,
-        })
-      }
+      adicionar({
+        variacaoId:   d.variacaoId,
+        produtoId:    d.produtoId,
+        nomeProduto:  d.nome,
+        nomeVariacao: 'Decant 5ml',
+        preco:        d.preco,
+        quantidade:   1,
+        imagem:       d.imagem || IMAGENS_FALLBACK[d.nome] || '',
+        // isDecant: false → não aciona o desconto combo 3x2
+        // o cupom KITDESCOBERTA já contempla o desconto exclusivo do kit
+        isDecant:     false,
+      })
     }
 
     // Fecha o drawer que o adicionar() abre automaticamente e redireciona
