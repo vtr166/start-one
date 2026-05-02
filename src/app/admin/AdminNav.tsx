@@ -2,7 +2,8 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { LayoutDashboard, Package, ShoppingBag, Tag, Users, Image, Percent, LogOut, Boxes } from 'lucide-react'
+import { LayoutDashboard, Package, ShoppingBag, Tag, Users, Image, Percent, LogOut, Boxes, Store } from 'lucide-react'
+import { fazerLogout } from './login/actions'
 
 const links = [
   { href: '/admin',            label: 'Dashboard',  icon: LayoutDashboard },
@@ -45,14 +46,23 @@ export default function AdminNav() {
         })}
       </nav>
 
-      <div className="px-3 py-4 border-t border-[#2A2A2A]">
+      <div className="px-3 py-4 border-t border-[#2A2A2A] space-y-1">
         <Link
           href="/"
           className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-[#555] hover:text-[#F5F5F5] transition-colors"
         >
-          <LogOut size={16} />
+          <Store size={16} />
           Ver loja
         </Link>
+        <form action={fazerLogout}>
+          <button
+            type="submit"
+            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-[#555] hover:text-red-400 hover:bg-red-400/5 transition-colors"
+          >
+            <LogOut size={16} />
+            Sair
+          </button>
+        </form>
       </div>
     </aside>
   )
