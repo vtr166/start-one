@@ -144,8 +144,8 @@ export default function CheckoutPage() {
 
   function removerCupom() { setCupomAplicado(null); setCodigoCupom(''); setCupomErro('') }
 
-  const FRETE_GRATIS_MINIMO = 250
-  const DESCONTO_PIX_PCT    = 5
+  const FRETE_GRATIS_MINIMO = Number(process.env.NEXT_PUBLIC_FRETE_GRATIS_MINIMO ?? 250)
+  const DESCONTO_PIX_PCT    = Number(process.env.NEXT_PUBLIC_DESCONTO_PIX_PCT ?? 5)
 
   const freteGratis    = total() >= FRETE_GRATIS_MINIMO
   const freteEfetivo   = freteGratis ? 0 : (freteSelecionado?.preco ?? 0)

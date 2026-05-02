@@ -9,7 +9,7 @@ import { useEffect, useRef } from 'react'
 
 const WA_NUMBER = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER ?? '5511999999999'
 const ABANDONO_MS = 10 * 60 * 1000 // 10 minutos
-const FRETE_GRATIS_MINIMO = 250 // R$250
+const FRETE_GRATIS_MINIMO = Number(process.env.NEXT_PUBLIC_FRETE_GRATIS_MINIMO ?? 250)
 
 export default function CarrinhoDrawer() {
   const { itens, aberto, fecharCarrinho, remover, alterarQuantidade, subtotal, desconto, total } = useCarrinho()
