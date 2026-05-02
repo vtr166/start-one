@@ -47,6 +47,7 @@ export default function Footer() {
             <li><Link href="/sobre" className="hover:text-[#C9A84C] transition-colors">Sobre Nós</Link></li>
             <li><Link href="/faq" className="hover:text-[#C9A84C] transition-colors">Perguntas Frequentes</Link></li>
             <li><Link href="/pedido/consulta" className="hover:text-[#C9A84C] transition-colors">Rastrear Pedido</Link></li>
+            <li><Link href="/trocas" className="hover:text-[#C9A84C] transition-colors">Trocas e Devoluções</Link></li>
             <li><Link href="/privacidade" className="hover:text-[#C9A84C] transition-colors">Política de Privacidade</Link></li>
             <li>
               <a href="https://instagram.com/start_oneoficial" target="_blank" rel="noopener noreferrer" className="hover:text-[#C9A84C] transition-colors">

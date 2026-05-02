@@ -303,8 +303,12 @@ export async function enviarEmailComprador(pedido: DadosPedido) {
         ` : ''}
       </div>
 
-      <div style="padding:24px;background:#fff">
-        <p style="color:#555;margin:0">Em breve entraremos em contato via WhatsApp para confirmar a entrega. Qualquer dúvida, fale com a gente pelo Instagram <strong>@start_oneoficial</strong>.</p>
+      <div style="padding:24px;background:#fff;text-align:center">
+        <p style="color:#555;margin:0 0 16px">Em breve entraremos em contato via WhatsApp para confirmar a entrega.</p>
+        <a href="${process.env.NEXT_PUBLIC_SITE_URL ?? 'https://startoneimports.com.br'}/pedido/consulta?id=${pedido.id.slice(-6).toUpperCase()}&email=${encodeURIComponent(pedido.emailCliente)}"
+          style="background:#111;color:#C9A84C;text-decoration:none;padding:10px 24px;border-radius:8px;font-weight:600;font-size:13px;display:inline-block;border:1px solid #2A2A2A">
+          Acompanhar pedido #${pedido.id.slice(-6).toUpperCase()} →
+        </a>
       </div>
 
       <div style="background:#0A0A0A;padding:16px;text-align:center">

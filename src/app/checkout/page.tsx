@@ -37,6 +37,7 @@ export default function CheckoutPage() {
 
   const [fase, setFase]             = useState<Fase>('form')
   const [pixData, setPixData]       = useState<PixData | null>(null)
+  const [pedidoAprovadoId, setPedidoAprovadoId] = useState<string>('')
   const [carregando, setCarregando] = useState(false)
   const [erro, setErro]             = useState('')
   const [copiado, setCopiado]       = useState(false)
@@ -116,7 +117,7 @@ export default function CheckoutPage() {
     try {
       const res = await fetch(`/api/pedido-status?id=${pixData.pedidoId}`)
       const data = await res.json()
-      if (data.status === 'APROVADO') { limpar(); setFase('aprovado') }
+      if (data.status === 'APROVADO') { limpar(); setPedidoAprovadoId(pixData.pedidoId); setFase('aprovado') }
     } catch { /* ignora */ }
   }, [pixData, limpar])
 
@@ -206,23 +207,70 @@ export default function CheckoutPage() {
 
   // ── Aprovado ───────────────────────────────────────────────
   if (fase === 'aprovado') return (
-    <div className="max-w-lg mx-auto px-4 py-24 text-center">
-      <CheckCircle size={72} className="mx-auto mb-6 text-green-400" />
+    <div className="max-w-lg mx-auto px-4 py-20 text-center">
+      <CheckCircle size={64} className="mx-auto mb-6 text-green-400" />
       <h1 className="text-2xl font-bold text-[#F5F5F5] mb-3">Pagamento confirmado! 🎉</h1>
-      <p className="text-[#888] text-sm mb-2 leading-relaxed">Você receberá a confirmação no e-mail informado em instantes.</p>
-      <p className="text-[#888] text-sm mb-8">Entraremos em contato pelo WhatsApp para combinar a entrega.</p>
-      <a href="/" className="btn-gold text-sm px-8 py-3 inline-block">Continuar comprando</a>
+      <p className="text-[#888] text-sm mb-6 leading-relaxed">
+        Você receberá a confirmação no e-mail informado em instantes.<br />
+        Entraremos em contato pelo WhatsApp para combinar a entrega.
+      </p>
+
+      {/* Código do pedido */}
+      {pedidoAprovadoId && (
+        <div className="mb-6 p-4 rounded-xl bg-[#111] border border-[#2A2A2A] inline-block text-left">
+          <p className="text-[10px] text-[#555] uppercase tracking-widest mb-1">Código do pedido</p>
+          <p className="font-mono text-xl font-black text-[#C9A84C] tracking-widest">
+            #{pedidoAprovadoId.slice(-6).toUpperCase()}
+          </p>
+          <p className="text-[10px] text-[#444] mt-1">Guarde este código para acompanhar sua entrega</p>
+        </div>
+      )}
+
+      <div className="flex flex-col gap-3 items-center">
+        {pedidoAprovadoId && (
+          <a
+            href={`/pedido/consulta?id=${pedidoAprovadoId.slice(-6)}&email=${encodeURIComponent(form.email)}`}
+            className="btn-outline-gold text-sm px-8 py-3 inline-block"
+          >
+            Acompanhar pedido
+          </a>
+        )}
+        <a href="/" className="btn-gold text-sm px-8 py-3 inline-block">Continuar comprando</a>
+      </div>
     </div>
   )
 
   // ── Pendente (cartão em análise) ──────────────────────────
   if (fase === 'pendente') return (
-    <div className="max-w-lg mx-auto px-4 py-24 text-center">
-      <Clock size={72} className="mx-auto mb-6 text-yellow-400" />
+    <div className="max-w-lg mx-auto px-4 py-20 text-center">
+      <Clock size={64} className="mx-auto mb-6 text-yellow-400" />
       <h1 className="text-2xl font-bold text-[#F5F5F5] mb-3">Pagamento em análise</h1>
-      <p className="text-[#888] text-sm mb-2 leading-relaxed">Seu pagamento está sendo analisado pela operadora do cartão.</p>
-      <p className="text-[#888] text-sm mb-8">Você receberá um e-mail assim que for aprovado. Em caso de dúvidas, entre em contato pelo WhatsApp.</p>
-      <a href="/" className="btn-gold text-sm px-8 py-3 inline-block">Voltar à loja</a>
+      <p className="text-[#888] text-sm mb-6 leading-relaxed">
+        Seu pagamento está sendo analisado pela operadora do cartão.<br />
+        Você receberá um e-mail assim que for aprovado.
+      </p>
+
+      {pedidoAprovadoId && (
+        <div className="mb-6 p-4 rounded-xl bg-[#111] border border-[#2A2A2A] inline-block text-left">
+          <p className="text-[10px] text-[#555] uppercase tracking-widest mb-1">Código do pedido</p>
+          <p className="font-mono text-xl font-black text-[#C9A84C] tracking-widest">
+            #{pedidoAprovadoId.slice(-6).toUpperCase()}
+          </p>
+          <p className="text-[10px] text-[#444] mt-1">Guarde este código para acompanhar sua entrega</p>
+        </div>
+      )}
+
+      <div className="flex flex-col gap-3 items-center">
+        {pedidoAprovadoId && (
+          <a
+            href={`/pedido/consulta?id=${pedidoAprovadoId.slice(-6)}&email=${encodeURIComponent(form.email)}`}
+            className="btn-outline-gold text-sm px-8 py-3 inline-block"
+          >
+            Acompanhar pedido
+          </a>
+        )}
+        <a href="/" className="btn-gold text-sm px-8 py-3 inline-block">Voltar à loja</a>
+      </div>
     </div>
   )
 
@@ -488,7 +536,7 @@ export default function CheckoutPage() {
                   cupom: cupomAplicado,
                   afiliadoRef: lerCookieAfiliado(),
                 }}
-                onSuccess={(pedidoId) => { limpar(); setFase('aprovado'); console.log('Pedido:', pedidoId) }}
+                onSuccess={(pedidoId) => { limpar(); setPedidoAprovadoId(pedidoId); setFase('aprovado') }}
                 onError={(msg) => setErro(msg)}
               />
             ) : (
