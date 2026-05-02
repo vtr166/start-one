@@ -181,12 +181,31 @@ export default function ProdutoDetalhes({ produto }: { produto: Produto }) {
             </div>
           </div>
 
-          {/* Preço + Botão */}
+          {/* Preço + Estoque + Botão */}
           {variacaoSelecionada && (
             <div className="pt-2">
-              <p className="text-3xl font-bold text-[#C9A84C] mb-4">
-                {formatPrice(variacaoSelecionada.preco)}
-              </p>
+              <div className="flex items-end justify-between mb-4">
+                <p className="text-3xl font-bold text-[#C9A84C]">
+                  {formatPrice(variacaoSelecionada.preco)}
+                </p>
+                {variacaoSelecionada.estoque === 0 ? (
+                  <span className="text-xs font-bold text-red-400 bg-red-400/10 px-2 py-1 rounded-lg border border-red-400/20">
+                    Esgotado
+                  </span>
+                ) : variacaoSelecionada.estoque <= 3 ? (
+                  <span className="text-xs font-bold text-orange-400 bg-orange-400/10 px-2 py-1 rounded-lg border border-orange-400/20 animate-pulse">
+                    ⚡ Últimas {variacaoSelecionada.estoque} unidades!
+                  </span>
+                ) : variacaoSelecionada.estoque <= 10 ? (
+                  <span className="text-xs font-bold text-yellow-400 bg-yellow-400/10 px-2 py-1 rounded-lg border border-yellow-400/20">
+                    Apenas {variacaoSelecionada.estoque} em estoque
+                  </span>
+                ) : (
+                  <span className="text-xs text-green-400 flex items-center gap-1">
+                    ✓ Em estoque
+                  </span>
+                )}
+              </div>
               <button
                 onClick={handleAdicionar}
                 disabled={variacaoSelecionada.estoque === 0}

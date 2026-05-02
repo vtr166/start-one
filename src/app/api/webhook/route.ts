@@ -37,6 +37,18 @@ export async function POST(req: NextRequest) {
       include: { itens: true },
     })
 
+    // Baixa de estoque ao aprovar (só uma vez por pedido)
+    if (status === 'APROVADO') {
+      await Promise.allSettled(
+        pedido.itens.map(item =>
+          prisma.variacao.update({
+            where: { id: item.variacaoId },
+            data: { estoque: { decrement: item.quantidade } },
+          })
+        )
+      )
+    }
+
     // Envia emails somente quando aprovado
     if (status === 'APROVADO') {
       const dadosEmail = {

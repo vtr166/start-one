@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
-import { Plus, Trash2, Loader2 } from 'lucide-react'
+import { Plus, Trash2, Loader2, Package, Droplets } from 'lucide-react'
 import { salvarProduto } from './actions'
 
 type Variacao = {
@@ -27,15 +27,32 @@ type Produto = {
   variacoes: Variacao[]
 }
 
+// ── Faixas de preço definidas pelo Victor ────────────────────
+const PRECOS_FRASCO = [249.9, 289.9, 349.9, 389.9]
+const PRECOS_DECANT = [15, 18, 20, 22, 25, 30]
+
+const VOLUMES_FRASCO = ['30ml', '50ml', '60ml', '75ml', '80ml', '100ml', '125ml']
+const VOLUMES_DECANT = ['3ml', '5ml', '10ml']
+
+// Badge de estoque
+function EstoqueBadge({ estoque }: { estoque: number }) {
+  if (estoque === 0)  return <span className="text-[10px] font-bold text-red-400">● Esgotado</span>
+  if (estoque <= 3)   return <span className="text-[10px] font-bold text-orange-400">● Crítico ({estoque})</span>
+  if (estoque <= 10)  return <span className="text-[10px] font-bold text-yellow-400">● Baixo ({estoque})</span>
+  return <span className="text-[10px] font-bold text-green-400">● Em estoque ({estoque})</span>
+}
+
 export default function FormProduto({ produto }: { produto?: Produto }) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
   const [variacoes, setVariacoes] = useState<Variacao[]>(
-    produto?.variacoes ?? [{ tipo: 'DECANT', volume: '5ml', preco: 0, estoque: 0 }]
+    produto?.variacoes ?? [{ tipo: 'DECANT', volume: '5ml', preco: 22, estoque: 0 }]
   )
 
-  function addVariacao() {
-    setVariacoes([...variacoes, { tipo: 'FRASCO', volume: '', preco: 0, estoque: 0 }])
+  function addVariacao(tipo: 'FRASCO' | 'DECANT') {
+    const preco = tipo === 'FRASCO' ? 249.9 : 22
+    const volume = tipo === 'FRASCO' ? '100ml' : '5ml'
+    setVariacoes([...variacoes, { tipo, volume, preco, estoque: 0 }])
   }
 
   function removeVariacao(i: number) {
@@ -50,15 +67,17 @@ export default function FormProduto({ produto }: { produto?: Produto }) {
     e.preventDefault()
     const fd = new FormData(e.currentTarget)
     fd.set('variacoes', JSON.stringify(variacoes))
-
     startTransition(async () => {
       await salvarProduto(fd)
       router.push('/admin/produtos')
     })
   }
 
-  const input = 'w-full bg-[#0A0A0A] border border-[#2A2A2A] rounded-lg px-4 py-2.5 text-sm text-[#F5F5F5] placeholder-[#444] focus:outline-none focus:border-[#C9A84C] transition-colors'
+  const input = 'w-full bg-[#0A0A0A] border border-[#2A2A2A] rounded-lg px-3 py-2.5 text-sm text-[#F5F5F5] placeholder-[#444] focus:outline-none focus:border-[#C9A84C] transition-colors'
   const label = 'block text-xs text-[#888] mb-1.5'
+
+  const frascos = variacoes.filter(v => v.tipo === 'FRASCO')
+  const decants = variacoes.filter(v => v.tipo === 'DECANT')
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
@@ -95,40 +114,29 @@ export default function FormProduto({ produto }: { produto?: Produto }) {
 
       <div>
         <label className={label}>Descrição *</label>
-        <textarea
-          name="descricao"
-          required
-          rows={3}
-          defaultValue={produto?.descricao}
-          placeholder="Descreva o perfume, sua família olfativa, ocasião..."
-          className={input}
-        />
+        <textarea name="descricao" required rows={3} defaultValue={produto?.descricao}
+          placeholder="Descreva o perfume, sua família olfativa, ocasião..." className={input} />
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
         <div>
           <label className={label}>Notas de Topo</label>
-          <input name="notasTopo" defaultValue={produto?.notasTopo ?? ''} placeholder="Ex: Bergamota, Limão" className={input} />
+          <input name="notasTopo" defaultValue={produto?.notasTopo ?? ''} placeholder="Bergamota, Limão" className={input} />
         </div>
         <div>
           <label className={label}>Notas de Coração</label>
-          <input name="notasCoracao" defaultValue={produto?.notasCoracao ?? ''} placeholder="Ex: Rosa, Jasmim" className={input} />
+          <input name="notasCoracao" defaultValue={produto?.notasCoracao ?? ''} placeholder="Rosa, Jasmim" className={input} />
         </div>
         <div>
           <label className={label}>Notas de Base</label>
-          <input name="notasBase" defaultValue={produto?.notasBase ?? ''} placeholder="Ex: Oud, Âmbar" className={input} />
+          <input name="notasBase" defaultValue={produto?.notasBase ?? ''} placeholder="Oud, Âmbar" className={input} />
         </div>
       </div>
 
       <div>
         <label className={label}>URLs das imagens (uma por linha)</label>
-        <textarea
-          name="imagens"
-          rows={3}
-          defaultValue={produto?.imagens.join('\n') ?? ''}
-          placeholder="https://res.cloudinary.com/..."
-          className={input}
-        />
+        <textarea name="imagens" rows={3} defaultValue={produto?.imagens.join('\n') ?? ''}
+          placeholder="https://res.cloudinary.com/..." className={input} />
         <p className="text-xs text-[#555] mt-1">Cole as URLs do Cloudinary após fazer o upload das fotos.</p>
       </div>
 
@@ -137,87 +145,140 @@ export default function FormProduto({ produto }: { produto?: Produto }) {
         <label htmlFor="destaque" className="text-sm text-[#888]">Exibir como destaque na home</label>
       </div>
 
-      {/* Variações */}
-      <div>
-        <div className="flex items-center justify-between mb-3">
+      {/* ── VARIAÇÕES ──────────────────────────────────────────── */}
+      <div className="space-y-4">
+        <div className="flex items-center justify-between">
           <label className="text-xs font-bold uppercase tracking-widest text-[#C9A84C]">
-            Variações (tamanhos e preços) *
+            Variações, preços e estoque
           </label>
-          <button type="button" onClick={addVariacao} className="btn-outline-gold text-xs px-3 py-1.5 flex items-center gap-1">
-            <Plus size={13} /> Adicionar
-          </button>
+          <div className="flex gap-2">
+            <button type="button" onClick={() => addVariacao('FRASCO')}
+              className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg border border-[#C9A84C]/40 text-[#C9A84C] hover:bg-[#C9A84C]/10 transition-colors">
+              <Package size={12} /> + Frasco
+            </button>
+            <button type="button" onClick={() => addVariacao('DECANT')}
+              className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg border border-[#555]/40 text-[#888] hover:border-[#888] transition-colors">
+              <Droplets size={12} /> + Decant
+            </button>
+          </div>
         </div>
 
-        <div className="space-y-3">
-          {variacoes.map((v, i) => (
-            <div key={i} className="grid grid-cols-4 gap-3 p-4 rounded-xl bg-[#0A0A0A] border border-[#2A2A2A]">
-              <div>
-                <label className={label}>Tipo</label>
-                <select
-                  value={v.tipo}
-                  onChange={(e) => updateVariacao(i, 'tipo', e.target.value)}
-                  className={input}
-                >
-                  <option value="DECANT">Decant</option>
-                  <option value="FRASCO">Frasco</option>
-                </select>
-              </div>
-              <div>
-                <label className={label}>Volume</label>
-                <input
-                  value={v.volume}
-                  onChange={(e) => updateVariacao(i, 'volume', e.target.value)}
-                  placeholder="5ml"
-                  className={input}
-                />
-              </div>
-              <div>
-                <label className={label}>Preço (R$)</label>
-                <input
-                  type="number"
-                  step="0.01"
-                  min="0"
-                  value={v.preco}
-                  onChange={(e) => updateVariacao(i, 'preco', parseFloat(e.target.value))}
-                  className={input}
-                />
-              </div>
-              <div className="flex gap-2">
-                <div className="flex-1">
-                  <label className={label}>Estoque</label>
-                  <input
-                    type="number"
-                    min="0"
-                    value={v.estoque}
-                    onChange={(e) => updateVariacao(i, 'estoque', parseInt(e.target.value))}
-                    className={input}
-                  />
+        {/* Frascos */}
+        {frascos.length > 0 && (
+          <div className="space-y-2">
+            <p className="text-[10px] text-[#555] uppercase tracking-widest font-bold flex items-center gap-1.5">
+              <Package size={9} /> Frascos
+            </p>
+            {variacoes.map((v, i) => v.tipo !== 'FRASCO' ? null : (
+              <div key={i} className="grid grid-cols-12 gap-2 p-4 rounded-xl bg-[#0A0A0A] border border-[#2A2A2A]">
+                {/* Volume */}
+                <div className="col-span-3">
+                  <label className={label}>Volume</label>
+                  <select value={v.volume} onChange={e => updateVariacao(i, 'volume', e.target.value)} className={input}>
+                    {VOLUMES_FRASCO.map(vol => <option key={vol} value={vol}>{vol}</option>)}
+                    <option value="outro">Outro</option>
+                  </select>
                 </div>
-                {variacoes.length > 1 && (
-                  <button
-                    type="button"
-                    onClick={() => removeVariacao(i)}
-                    className="self-end mb-0.5 p-2 text-[#555] hover:text-red-400 transition-colors"
+
+                {/* Faixa de preço */}
+                <div className="col-span-4">
+                  <label className={label}>Faixa de preço</label>
+                  <select
+                    value={v.preco}
+                    onChange={e => updateVariacao(i, 'preco', parseFloat(e.target.value))}
+                    className={input}
                   >
-                    <Trash2 size={15} />
-                  </button>
-                )}
+                    {PRECOS_FRASCO.map(p => (
+                      <option key={p} value={p}>R$ {p.toFixed(2).replace('.', ',')}</option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Estoque */}
+                <div className="col-span-4">
+                  <label className={label}>
+                    Estoque <EstoqueBadge estoque={v.estoque} />
+                  </label>
+                  <input type="number" min="0" value={v.estoque}
+                    onChange={e => updateVariacao(i, 'estoque', parseInt(e.target.value) || 0)}
+                    className={input} />
+                </div>
+
+                {/* Remover */}
+                <div className="col-span-1 flex items-end pb-0.5">
+                  {variacoes.length > 1 && (
+                    <button type="button" onClick={() => removeVariacao(i)}
+                      className="p-2 text-[#555] hover:text-red-400 transition-colors">
+                      <Trash2 size={14} />
+                    </button>
+                  )}
+                </div>
               </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        )}
+
+        {/* Decants */}
+        {decants.length > 0 && (
+          <div className="space-y-2">
+            <p className="text-[10px] text-[#555] uppercase tracking-widest font-bold flex items-center gap-1.5">
+              <Droplets size={9} /> Decants
+            </p>
+            {variacoes.map((v, i) => v.tipo !== 'DECANT' ? null : (
+              <div key={i} className="grid grid-cols-12 gap-2 p-4 rounded-xl bg-[#0A0A0A] border border-[#2A2A2A]">
+                {/* Volume */}
+                <div className="col-span-3">
+                  <label className={label}>Volume</label>
+                  <select value={v.volume} onChange={e => updateVariacao(i, 'volume', e.target.value)} className={input}>
+                    {VOLUMES_DECANT.map(vol => <option key={vol} value={vol}>{vol}</option>)}
+                  </select>
+                </div>
+
+                {/* Preço */}
+                <div className="col-span-4">
+                  <label className={label}>Preço</label>
+                  <select value={v.preco} onChange={e => updateVariacao(i, 'preco', parseFloat(e.target.value))} className={input}>
+                    {PRECOS_DECANT.map(p => (
+                      <option key={p} value={p}>R$ {p.toFixed(2).replace('.', ',')}</option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Estoque */}
+                <div className="col-span-4">
+                  <label className={label}>
+                    Estoque <EstoqueBadge estoque={v.estoque} />
+                  </label>
+                  <input type="number" min="0" value={v.estoque}
+                    onChange={e => updateVariacao(i, 'estoque', parseInt(e.target.value) || 0)}
+                    className={input} />
+                </div>
+
+                {/* Remover */}
+                <div className="col-span-1 flex items-end pb-0.5">
+                  {variacoes.length > 1 && (
+                    <button type="button" onClick={() => removeVariacao(i)}
+                      className="p-2 text-[#555] hover:text-red-400 transition-colors">
+                      <Trash2 size={14} />
+                    </button>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {variacoes.length === 0 && (
+          <p className="text-xs text-[#555] text-center py-4">Adicione pelo menos uma variação.</p>
+        )}
       </div>
 
       <div className="flex gap-3 pt-2">
         <button type="submit" disabled={isPending} className="btn-gold flex items-center gap-2">
-          {isPending ? <Loader2 size={16} className="animate-spin" /> : null}
+          {isPending && <Loader2 size={16} className="animate-spin" />}
           {produto ? 'Salvar alterações' : 'Cadastrar produto'}
         </button>
-        <button
-          type="button"
-          onClick={() => router.push('/admin/produtos')}
-          className="btn-outline-gold text-sm"
-        >
+        <button type="button" onClick={() => router.push('/admin/produtos')} className="btn-outline-gold text-sm">
           Cancelar
         </button>
       </div>
