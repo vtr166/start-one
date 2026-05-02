@@ -28,10 +28,6 @@ type Produto = {
   variacoes: Variacao[]
 }
 
-// ── Faixas de preço definidas pelo Victor ────────────────────
-const PRECOS_FRASCO = [249.9, 289.9, 349.9, 389.9]
-const PRECOS_DECANT = [15, 18, 20, 22, 25, 30]
-
 const VOLUMES_FRASCO = ['30ml', '50ml', '60ml', '75ml', '80ml', '100ml', '125ml']
 const VOLUMES_DECANT = ['3ml', '5ml', '10ml']
 
@@ -183,18 +179,16 @@ export default function FormProduto({ produto }: { produto?: Produto }) {
                   </select>
                 </div>
 
-                {/* Faixa de preço */}
+                {/* Preço */}
                 <div className="col-span-4">
-                  <label className={label}>Faixa de preço</label>
-                  <select
+                  <label className={label}>Preço (R$)</label>
+                  <input
+                    type="number" min="0" step="0.01"
                     value={v.preco}
-                    onChange={e => updateVariacao(i, 'preco', parseFloat(e.target.value))}
+                    onChange={e => updateVariacao(i, 'preco', parseFloat(e.target.value) || 0)}
                     className={input}
-                  >
-                    {PRECOS_FRASCO.map(p => (
-                      <option key={p} value={p}>R$ {p.toFixed(2).replace('.', ',')}</option>
-                    ))}
-                  </select>
+                    placeholder="Ex: 249.90"
+                  />
                 </div>
 
                 {/* Estoque */}
@@ -239,12 +233,14 @@ export default function FormProduto({ produto }: { produto?: Produto }) {
 
                 {/* Preço */}
                 <div className="col-span-4">
-                  <label className={label}>Preço</label>
-                  <select value={v.preco} onChange={e => updateVariacao(i, 'preco', parseFloat(e.target.value))} className={input}>
-                    {PRECOS_DECANT.map(p => (
-                      <option key={p} value={p}>R$ {p.toFixed(2).replace('.', ',')}</option>
-                    ))}
-                  </select>
+                  <label className={label}>Preço (R$)</label>
+                  <input
+                    type="number" min="0" step="0.01"
+                    value={v.preco}
+                    onChange={e => updateVariacao(i, 'preco', parseFloat(e.target.value) || 0)}
+                    className={input}
+                    placeholder="Ex: 35.00"
+                  />
                 </div>
 
                 {/* Estoque */}
