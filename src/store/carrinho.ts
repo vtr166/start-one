@@ -159,6 +159,10 @@ export const useCarrinho = create<CarrinhoStore>()(
 
       totalItens: () => get().itens.reduce((acc, i) => acc + i.quantidade, 0),
     }),
-    { name: 'startone-carrinho' }
+    {
+      name: 'startone-carrinho',
+      // Não persiste o estado do drawer — ele nunca deve reabrir sozinho entre sessões
+      partialize: (state) => ({ itens: state.itens }),
+    }
   )
 )
