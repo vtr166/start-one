@@ -9,6 +9,7 @@ import CarrinhoDrawer from '@/components/CarrinhoDrawer'
 import BotaoWhatsApp from '@/components/BotaoWhatsApp'
 import AffiliateTracker from '@/components/AffiliateTracker'
 import PopupCaptura from '@/components/PopupCaptura'
+import BannerLGPD from '@/components/BannerLGPD'
 
 const geist = Geist({
   variable: '--font-geist-sans',
@@ -85,6 +86,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <Suspense fallback={null}>
           <PopupCaptura />
         </Suspense>
+        {/* Banner LGPD */}
+        <BannerLGPD />
       </body>
     </html>
   )

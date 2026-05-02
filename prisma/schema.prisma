@@ -59,6 +59,7 @@ model Pedido {
   cupomId         String?
   desconto        Float?       @default(0)
   afiliadoId      String?      // rastreamento por link (?ref=)
+  codigoRastreio  String?      // código dos Correios / transportadora
   criadoEm       DateTime     @default(now())
   atualizadoEm   DateTime     @updatedAt
 

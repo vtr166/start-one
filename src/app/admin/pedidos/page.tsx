@@ -171,7 +171,11 @@ export default async function PedidosAdmin({ searchParams }: Props) {
 
                     {/* Ações */}
                     <div className="border-t border-[#2A2A2A] pt-3">
-                      <AcoesPedido id={pedido.id} status={pedido.status as 'PENDENTE' | 'APROVADO' | 'ENVIADO' | 'ENTREGUE' | 'CANCELADO' | 'REJEITADO'} />
+                      <AcoesPedido
+                        id={pedido.id}
+                        status={pedido.status as 'PENDENTE' | 'APROVADO' | 'ENVIADO' | 'ENTREGUE' | 'CANCELADO' | 'REJEITADO'}
+                        codigoRastreio={pedido.codigoRastreio}
+                      />
                     </div>
                   </div>
                 )

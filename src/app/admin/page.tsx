@@ -6,7 +6,7 @@ import { formatPrice } from '@/lib/utils'
 import AdminNav from './AdminNav'
 import {
   Package, ShoppingBag, TrendingUp, Plus, Clock,
-  CheckCircle, Truck, Tag, Users, Image, Percent,
+  CheckCircle, Truck, Tag, Users, Image, Percent, Download,
 } from 'lucide-react'
 
 const STATUS_COLOR: Record<string, string> = {
@@ -205,6 +205,35 @@ export default async function AdminDashboard() {
                 </tbody>
               </table>
             </div>
+          </div>
+
+          {/* ── Exportar dados ────────────────────────────── */}
+          <div className="card-dark p-6">
+            <div className="flex items-center gap-2 mb-4">
+              <Download size={15} className="text-[#C9A84C]" />
+              <h2 className="text-sm font-bold uppercase tracking-widest text-[#C9A84C]">Exportar dados</h2>
+            </div>
+            <div className="flex flex-wrap gap-3">
+              <a
+                href="/api/admin/exportar-clientes?tipo=clientes"
+                className="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-[#C9A84C]/30 text-[#C9A84C] text-xs font-bold hover:bg-[#C9A84C]/10 transition-colors"
+                download
+              >
+                <Download size={13} />
+                Clientes (CSV)
+              </a>
+              <a
+                href="/api/admin/exportar-clientes?tipo=pedidos"
+                className="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-[#2A2A2A] text-[#888] text-xs font-bold hover:border-[#C9A84C]/30 hover:text-[#C9A84C] transition-colors"
+                download
+              >
+                <Download size={13} />
+                Pedidos (CSV)
+              </a>
+            </div>
+            <p className="text-[10px] text-[#444] mt-3">
+              Clientes únicos com pedidos aprovados. Importe no WhatsApp Business ou ferramenta de e-mail marketing.
+            </p>
           </div>
 
         </div>

@@ -134,6 +134,66 @@ export async function enviarEmailVendedor(pedido: DadosPedido) {
   )
 }
 
+export async function enviarEmailRastreio(dados: {
+  nomeCliente: string
+  emailCliente: string
+  pedidoId: string
+  codigoRastreio: string
+  freteEmpresa?: string | null
+}) {
+  const primeiroNome = dados.nomeCliente.split(' ')[0]
+  const rastreioUrl = `https://rastreamento.correios.com.br/app/index.php?objeto=${dados.codigoRastreio}`
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://startoneimports.com.br'
+
+  const html = `
+    <div style="font-family:sans-serif;max-width:600px;margin:0 auto">
+      <div style="background:#0A0A0A;padding:24px;text-align:center">
+        <h1 style="color:#C9A84C;margin:0;font-size:20px">Start One Imports</h1>
+      </div>
+
+      <div style="padding:32px;background:#fff;text-align:center">
+        <div style="font-size:48px;margin-bottom:16px">📦</div>
+        <h2 style="color:#111;margin:0 0 8px">Seu pedido foi enviado!</h2>
+        <p style="color:#555;margin:0">
+          Olá, <strong>${primeiroNome}</strong>! Seu pedido <strong>#${dados.pedidoId.slice(-6).toUpperCase()}</strong>
+          já está a caminho.
+        </p>
+      </div>
+
+      <div style="padding:24px;background:#F9F9F9;text-align:center;border-top:3px solid #C9A84C">
+        <p style="color:#888;font-size:13px;margin:0 0 12px">Código de rastreamento${dados.freteEmpresa ? ` — ${dados.freteEmpresa}` : ''}:</p>
+        <div style="display:inline-block;background:#0A0A0A;color:#C9A84C;font-size:22px;font-weight:900;letter-spacing:3px;padding:14px 28px;border-radius:8px;margin:8px 0">
+          ${dados.codigoRastreio}
+        </div>
+        <p style="margin:16px 0 0">
+          <a href="${rastreioUrl}" style="background:#C9A84C;color:#0A0A0A;text-decoration:none;padding:12px 28px;border-radius:8px;font-weight:700;font-size:14px;display:inline-block">
+            Rastrear pedido →
+          </a>
+        </p>
+        <p style="color:#aaa;font-size:11px;margin:12px 0 0">
+          Atualizações podem levar até 24h para aparecer no sistema dos Correios.
+        </p>
+      </div>
+
+      <div style="padding:20px;background:#fff;text-align:center">
+        <p style="color:#555;font-size:13px;margin:0">
+          Dúvidas? Fale com a gente pelo <strong>Instagram @start_oneoficial</strong> ou WhatsApp.
+        </p>
+      </div>
+
+      <div style="background:#0A0A0A;padding:16px;text-align:center">
+        <p style="color:#666;font-size:12px;margin:0">Start One Imports · ${siteUrl}</p>
+      </div>
+    </div>
+  `
+
+  await enviarEmail(
+    dados.emailCliente,
+    `📦 Pedido #${dados.pedidoId.slice(-6).toUpperCase()} enviado — rastreie agora`,
+    html
+  )
+}
+
 export async function enviarEmailFidelidade(dados: {
   nomeCliente: string
   emailCliente: string

@@ -124,10 +124,16 @@ export default function SucessoPage() {
         </div>
       )}
 
-      <div className="text-center">
+      <div className="text-center space-y-3">
         <Link href="/" className="btn-gold text-sm px-8 py-3 inline-block">
           Continuar comprando
         </Link>
+        <p className="text-xs text-[#444]">
+          Quer acompanhar seu pedido?{' '}
+          <Link href="/pedido/consulta" className="text-[#C9A84C] hover:underline">
+            Consultar status
+          </Link>
+        </p>
       </div>
     </div>
   )
