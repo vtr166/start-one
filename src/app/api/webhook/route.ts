@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { MercadoPagoConfig, Payment } from 'mercadopago'
 import { prisma } from '@/lib/prisma'
-import { enviarEmailVendedor, enviarEmailComprador, enviarWhatsAppVendedor } from '@/lib/email'
+import { enviarEmailVendedor, enviarEmailComprador, enviarWhatsAppVendedor, enviarEmailFidelidade } from '@/lib/email'
 
 const client = new MercadoPagoConfig({
   accessToken: process.env.MP_ACCESS_TOKEN!,
@@ -74,6 +74,43 @@ export async function POST(req: NextRequest) {
         enviarEmailComprador(dadosEmail),
         enviarWhatsAppVendedor(dadosEmail),
       ])
+
+      // ── Programa de Fidelidade ────────────────────────────────
+      // Conta quantos pedidos APROVADOS esse e-mail já tem (incluindo o atual)
+      const totalCompras = await prisma.pedido.count({
+        where: {
+          emailCliente: pedido.emailCliente,
+          status: 'APROVADO',
+        },
+      })
+
+      // A cada múltiplo de 5 → gera cupom de decant grátis
+      if (totalCompras > 0 && totalCompras % 5 === 0) {
+        const codigo = `FIEL-${Math.random().toString(36).slice(2, 8).toUpperCase()}`
+        const expiresAt = new Date(Date.now() + 60 * 24 * 60 * 60 * 1000) // 60 dias
+
+        await prisma.cupom.create({
+          data: {
+            codigo,
+            tipo: 'FIXO',
+            valor: 30,          // cobre até o decant mais caro (R$30)
+            maxUsos: 1,
+            ativo: true,
+            expiresAt,
+            descricao: `Decant grátis — Fidelidade ${totalCompras}ª compra — ${pedido.nomeCliente} (${pedido.emailCliente})`,
+          },
+        })
+
+        await enviarEmailFidelidade({
+          nomeCliente: pedido.nomeCliente,
+          emailCliente: pedido.emailCliente,
+          codigoCupom: codigo,
+          totalCompras,
+          expiresAt,
+        }).catch(err => console.error('[FIDELIDADE EMAIL]', err))
+
+        console.log(`[FIDELIDADE] ${pedido.emailCliente} → ${totalCompras}ª compra → cupom ${codigo}`)
+      }
     }
 
     return NextResponse.json({ ok: true })
