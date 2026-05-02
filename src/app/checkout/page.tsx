@@ -1,6 +1,7 @@
 'use client'
 
-import { useState, useEffect, useCallback, useRef } from 'react'
+import { useState, useEffect, useCallback, useRef, Suspense } from 'react'
+import { useSearchParams } from 'next/navigation'
 import { useCarrinho, calcularDescontoDecants, calcularDescontoYara } from '@/store/carrinho'
 import { formatPrice } from '@/lib/utils'
 import {
@@ -30,10 +31,11 @@ function mascaraCEP(v: string) {
   return v.replace(/\D/g,'').replace(/(\d{5})(\d)/,'$1-$2').slice(0,9)
 }
 
-export default function CheckoutPage() {
+function CheckoutPageInner() {
   const { itens, subtotal, desconto, total, limpar } = useCarrinho()
   const combo     = calcularDescontoDecants(itens)
   const comboYara = calcularDescontoYara(itens)
+  const searchParams = useSearchParams()
 
   const [fase, setFase]             = useState<Fase>('form')
   const [pixData, setPixData]       = useState<PixData | null>(null)
@@ -63,6 +65,22 @@ export default function CheckoutPage() {
   const [cupomAplicado, setCupomAplicado]   = useState<CupomAplicado | null>(null)
   const [cupomErro, setCupomErro]           = useState('')
   const [validandoCupom, setValidandoCupom] = useState(false)
+
+  // Auto-aplica cupom passado via URL (?cupom=KITDESCOBERTA)
+  useEffect(() => {
+    const codUrl = searchParams.get('cupom')?.trim().toUpperCase()
+    if (!codUrl || cupomAplicado) return
+    setCodigoCupom(codUrl)
+    async function autoAplicar() {
+      try {
+        const res  = await fetch(`/api/cupom?codigo=${codUrl}&total=${total()}`)
+        const data = await res.json()
+        if (res.ok) setCupomAplicado(data)
+      } catch { /* silencia */ }
+    }
+    autoAplicar()
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   // Peso estimado baseado nos itens
   const pesoEstimado = itens.reduce((acc, i) => {
@@ -133,9 +151,11 @@ export default function CheckoutPage() {
     setValidandoCupom(true)
     setCupomErro('')
     try {
-      const base = total() + (freteSelecionado?.preco ?? 0)
-      const res  = await fetch(`/api/cupom?codigo=${cod}&total=${base}`)
-      const data = await res.json()
+      // Kit Descoberta: valida contra subtotal (sem combo) pois o cupom cobre ambos
+      const isKit  = cod === 'KITDESCOBERTA'
+      const base   = (isKit ? subtotal() : total()) + (freteSelecionado?.preco ?? 0)
+      const res    = await fetch(`/api/cupom?codigo=${cod}&total=${base}`)
+      const data   = await res.json()
       if (!res.ok) { setCupomErro(data.erro); return }
       setCupomAplicado(data)
     } catch { setCupomErro('Erro ao validar cupom') }
@@ -147,9 +167,13 @@ export default function CheckoutPage() {
   const FRETE_GRATIS_MINIMO = Number(process.env.NEXT_PUBLIC_FRETE_GRATIS_MINIMO ?? 250)
   const DESCONTO_PIX_PCT    = Number(process.env.NEXT_PUBLIC_DESCONTO_PIX_PCT ?? 5)
 
-  const freteGratis    = total() >= FRETE_GRATIS_MINIMO
+  // Quando o cupom KITDESCOBERTA está ativo, o desconto de combo decants já está
+  // incorporado no valor do cupom — usa subtotal() para não acumular os dois.
+  const isKitCupom     = cupomAplicado?.codigo === 'KITDESCOBERTA'
+  const baseTotal      = isKitCupom ? subtotal() : total()
+  const freteGratis    = baseTotal >= FRETE_GRATIS_MINIMO
   const freteEfetivo   = freteGratis ? 0 : (freteSelecionado?.preco ?? 0)
-  const totalComFrete  = total() + freteEfetivo
+  const totalComFrete  = baseTotal + freteEfetivo
   const descontoCupom  = cupomAplicado?.desconto ?? 0
   const descontoPix    = metodoPag === 'pix' ? Math.round(totalComFrete * DESCONTO_PIX_PCT) / 100 : 0
   const totalComDesconto = totalComFrete - descontoCupom - descontoPix
@@ -634,5 +658,13 @@ export default function CheckoutPage() {
         </div>
       </div>
     </div>
+  )
+}
+
+export default function CheckoutPage() {
+  return (
+    <Suspense fallback={null}>
+      <CheckoutPageInner />
+    </Suspense>
   )
 }

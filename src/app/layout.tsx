@@ -10,6 +10,7 @@ import BotaoWhatsApp from '@/components/BotaoWhatsApp'
 import AffiliateTracker from '@/components/AffiliateTracker'
 import PopupCaptura from '@/components/PopupCaptura'
 import BannerLGPD from '@/components/BannerLGPD'
+import ConditionalLayout from '@/components/ConditionalLayout'
 
 const geist = Geist({
   variable: '--font-geist-sans',
@@ -87,17 +88,22 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <Suspense fallback={null}>
           <AffiliateTracker />
         </Suspense>
-        <Header />
         <CarrinhoDrawer />
-        <main className="flex-1">{children}</main>
-        <Footer />
-        <BotaoWhatsApp />
-        {/* Popup de captura de lead */}
-        <Suspense fallback={null}>
-          <PopupCaptura />
-        </Suspense>
-        {/* Banner LGPD */}
-        <BannerLGPD />
+        <ConditionalLayout
+          header={<Header />}
+          footer={<Footer />}
+          extras={
+            <>
+              <BotaoWhatsApp />
+              <Suspense fallback={null}>
+                <PopupCaptura />
+              </Suspense>
+              <BannerLGPD />
+            </>
+          }
+        >
+          {children}
+        </ConditionalLayout>
       </body>
     </html>
   )
