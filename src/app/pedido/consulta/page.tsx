@@ -6,7 +6,7 @@ import ConsultaForm from './ConsultaForm'
 import { Package, CheckCircle, Truck, Clock, XCircle, ExternalLink } from 'lucide-react'
 import Link from 'next/link'
 
-type Props = { searchParams: Promise<{ id?: string; email?: string }> }
+type Props = { searchParams: Promise<{ id?: string; cpf?: string }> }
 
 const STATUS_INFO: Record<string, { label: string; icon: typeof Package; cor: string; desc: string }> = {
   PENDENTE:  { label: 'Aguardando pagamento', icon: Clock,        cor: 'text-yellow-400', desc: 'Seu pedido está aguardando confirmação do pagamento.' },
@@ -18,16 +18,16 @@ const STATUS_INFO: Record<string, { label: string; icon: typeof Package; cor: st
 }
 
 export default async function ConsultaPedidoPage({ searchParams }: Props) {
-  const { id, email } = await searchParams
+  const { id, cpf } = await searchParams
 
   type PedidoResult = Awaited<ReturnType<typeof prisma.pedido.findFirst<{ include: { itens: true } }>>>
   let pedido: PedidoResult = null
 
-  if (id && email) {
+  if (id || cpf) {
     pedido = await prisma.pedido.findFirst({
       where: {
-        id: { contains: id, mode: 'insensitive' },
-        emailCliente: { equals: email, mode: 'insensitive' },
+        ...(id  ? { id: { contains: id, mode: 'insensitive' } } : {}),
+        ...(cpf ? { cpfCliente: { contains: cpf.replace(/\D/g, '') } } : {}),
       },
       include: { itens: true },
     })
@@ -51,14 +51,14 @@ export default async function ConsultaPedidoPage({ searchParams }: Props) {
       <div className="text-center mb-10">
         <Package size={36} className="mx-auto mb-4 text-[#C9A84C]" />
         <h1 className="text-2xl font-bold text-[#F5F5F5] mb-2">Acompanhar pedido</h1>
-        <p className="text-sm text-[#888]">Informe o código do pedido e o e-mail usado na compra</p>
+        <p className="text-sm text-[#888]">Informe o número do pedido ou o CPF usado na compra</p>
       </div>
 
       {/* Formulário de consulta */}
-      <ConsultaForm idInicial={id} emailInicial={email} />
+      <ConsultaForm idInicial={id} cpfInicial={cpf} />
 
       {/* Resultado */}
-      {id && email && !pedido && (
+      {(id || cpf) && !pedido && (
         <div className="mt-8 p-5 rounded-xl bg-red-500/5 border border-red-500/20 text-center">
           <p className="text-red-400 text-sm font-semibold mb-1">Pedido não encontrado</p>
           <p className="text-xs text-[#888]">Verifique o código e o e-mail informados.</p>
