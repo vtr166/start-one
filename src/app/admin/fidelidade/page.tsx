@@ -3,12 +3,14 @@ export const dynamic = 'force-dynamic'
 import { prisma } from '@/lib/prisma'
 import { formatPrice } from '@/lib/utils'
 import { Gift, Star, Trophy, Crown } from 'lucide-react'
+import AdminNav from '../AdminNav'
 
-// Agrupa pedidos aprovados por e-mail e calcula progresso
+// Agrupa pedidos aprovados por CPF (ou e-mail como fallback) e calcula progresso
 async function getProgresso() {
   const pedidos = await prisma.pedido.findMany({
     where: { status: 'APROVADO' },
     select: {
+      cpfCliente: true,
       emailCliente: true,
       nomeCliente: true,
       telefoneCliente: true,
@@ -18,10 +20,11 @@ async function getProgresso() {
     orderBy: { criadoEm: 'asc' },
   })
 
-  // Agrupa por e-mail
+  // Agrupa por CPF quando disponível, senão por e-mail
   const mapa = new Map<string, {
     nome: string
     email: string
+    cpf: string | null
     telefone: string | null
     totalCompras: number
     totalGasto: number
@@ -30,15 +33,23 @@ async function getProgresso() {
   }>()
 
   for (const p of pedidos) {
-    const existente = mapa.get(p.emailCliente)
+    // Chave de identificação: CPF sem formatação ou e-mail
+    const chave = p.cpfCliente
+      ? p.cpfCliente.replace(/\D/g, '')
+      : p.emailCliente.toLowerCase()
+
+    const existente = mapa.get(chave)
     if (existente) {
       existente.totalCompras++
       existente.totalGasto += p.total
       existente.ultimaCompra = p.criadoEm
+      // Atualiza e-mail caso tenha trocado (mantém o mais recente)
+      existente.email = p.emailCliente
     } else {
-      mapa.set(p.emailCliente, {
+      mapa.set(chave, {
         nome: p.nomeCliente,
         email: p.emailCliente,
+        cpf: p.cpfCliente ?? null,
         telefone: p.telefoneCliente,
         totalCompras: 1,
         totalGasto: p.total,
@@ -80,7 +91,10 @@ export default async function AdminFidelidadePage() {
   const cuponsAtivos    = cupons.filter(c => c.ativo && c.usosAtuais === 0).length
 
   return (
-    <div className="p-6 max-w-5xl space-y-8">
+    <div className="flex min-h-screen">
+      <AdminNav />
+      <main className="flex-1 p-6 md:p-8 overflow-auto">
+      <div className="max-w-5xl space-y-8">
       <h1 className="text-xl font-bold text-[#F5F5F5] flex items-center gap-2">
         <Gift size={20} className="text-[#C9A84C]" /> Programa de Fidelidade
       </h1>
@@ -120,6 +134,7 @@ export default async function AdminFidelidadePage() {
                     <BadgeNivel compras={c.totalCompras} />
                   </div>
                   <p className="text-xs text-[#555]">{c.email}</p>
+                  {c.cpf && <p className="text-xs text-[#444] font-mono">CPF: {c.cpf}</p>}
                   {c.telefone && <p className="text-xs text-[#555]">{c.telefone}</p>}
                 </div>
 
@@ -183,6 +198,8 @@ export default async function AdminFidelidadePage() {
           </div>
         </div>
       )}
+      </div>
+      </main>
     </div>
   )
 }

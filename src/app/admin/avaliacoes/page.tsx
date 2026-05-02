@@ -3,6 +3,7 @@ export const dynamic = 'force-dynamic'
 import { prisma } from '@/lib/prisma'
 import { revalidatePath } from 'next/cache'
 import { Check, Trash2, Star } from 'lucide-react'
+import AdminNav from '../AdminNav'
 
 async function aprovar(id: string) {
   'use server'
@@ -41,7 +42,9 @@ export default async function AdminAvaliacoesPage() {
   })
 
   return (
-    <div className="p-6 max-w-4xl">
+    <div className="flex min-h-screen">
+      <AdminNav />
+      <main className="flex-1 p-6 md:p-8 overflow-auto">
       <h1 className="text-xl font-bold text-[#F5F5F5] mb-6">Avaliações</h1>
 
       {/* Pendentes */}
@@ -117,6 +120,7 @@ export default async function AdminAvaliacoesPage() {
           </div>
         )}
       </div>
+      </main>
     </div>
   )
 }

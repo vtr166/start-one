@@ -76,10 +76,14 @@ export async function POST(req: NextRequest) {
       ])
 
       // ── Programa de Fidelidade ────────────────────────────────
-      // Conta quantos pedidos APROVADOS esse e-mail já tem (incluindo o atual)
+      // Identifica o cliente pelo CPF (único por pessoa) ou cai no e-mail como fallback
+      const cpfCliente = pedido.cpfCliente ?? null
+
       const totalCompras = await prisma.pedido.count({
         where: {
-          emailCliente: pedido.emailCliente,
+          ...(cpfCliente
+            ? { cpfCliente }
+            : { emailCliente: pedido.emailCliente }),
           status: 'APROVADO',
         },
       })
@@ -89,15 +93,17 @@ export async function POST(req: NextRequest) {
         const codigo = `FIEL-${Math.random().toString(36).slice(2, 8).toUpperCase()}`
         const expiresAt = new Date(Date.now() + 60 * 24 * 60 * 60 * 1000) // 60 dias
 
+        const identificador = cpfCliente ?? pedido.emailCliente
+
         await prisma.cupom.create({
           data: {
             codigo,
             tipo: 'FIXO',
-            valor: 30,          // cobre até o decant mais caro (R$30)
+            valor: 30,
             maxUsos: 1,
             ativo: true,
             expiresAt,
-            descricao: `Decant grátis — Fidelidade ${totalCompras}ª compra — ${pedido.nomeCliente} (${pedido.emailCliente})`,
+            descricao: `Decant grátis — Fidelidade ${totalCompras}ª compra — ${pedido.nomeCliente} (${identificador})`,
           },
         })
 
@@ -109,7 +115,7 @@ export async function POST(req: NextRequest) {
           expiresAt,
         }).catch(err => console.error('[FIDELIDADE EMAIL]', err))
 
-        console.log(`[FIDELIDADE] ${pedido.emailCliente} → ${totalCompras}ª compra → cupom ${codigo}`)
+        console.log(`[FIDELIDADE] ${identificador} → ${totalCompras}ª compra → cupom ${codigo}`)
       }
     }
 

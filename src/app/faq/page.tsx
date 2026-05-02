@@ -1,6 +1,5 @@
 'use client'
 
-import type { Metadata } from 'next'
 import { useState } from 'react'
 import { ChevronDown, MessageCircle } from 'lucide-react'
 import Link from 'next/link'
@@ -157,7 +156,7 @@ export default function FaqPage() {
         </p>
         <div className="flex justify-center gap-3 flex-wrap">
           <a
-            href="https://wa.me/55SEUNUMERO"
+            href="https://wa.me/5514991228020?text=Olá!%20Tenho%20uma%20dúvida%20sobre%20a%20Start%20One%20Imports."
             target="_blank"
             rel="noopener noreferrer"
             className="btn-gold text-sm px-6 py-2.5"
