@@ -25,6 +25,7 @@ model Produto {
 
   variacoes   Variacao[]
   itensPedido ItemPedido[]
+  avaliacoes  Avaliacao[]
 }
 
 model Variacao {
@@ -137,6 +138,18 @@ model Cupom {
 enum TipoCupom {
   PERCENTUAL
   FIXO
+}
+
+model Avaliacao {
+  id         String   @id @default(cuid())
+  produtoId  String
+  nome       String
+  nota       Int      // 1–5
+  comentario String?
+  aprovado   Boolean  @default(false)
+  criadoEm  DateTime @default(now())
+
+  produto Produto @relation(fields: [produtoId], references: [id], onDelete: Cascade)
 }
 
 model Banner {

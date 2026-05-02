@@ -22,9 +22,12 @@ type Props = {
   categoria: string
   imagens: string[]
   variacoes: Variacao[]
+  // preço promocional opcional (calculado no server)
+  precoPromocional?: number | null
+  descontoPercent?: number | null
 }
 
-export default function ProdutoCard({ id, nome, slug, marca, categoria, imagens, variacoes }: Props) {
+export default function ProdutoCard({ id, nome, slug, marca, categoria, imagens, variacoes, precoPromocional, descontoPercent }: Props) {
   const { adicionar } = useCarrinho()
 
   const decant = variacoes.find((v) => v.tipo === 'DECANT' && v.ativo !== false && v.estoque > 0)
@@ -35,6 +38,7 @@ export default function ProdutoCard({ id, nome, slug, marca, categoria, imagens,
 
   const imagem = imagens?.[0] ?? ''
   const temEstoque = variacoes.some((v) => v.estoque > 0)
+  const temDesconto = !!precoPromocional && menorPreco && precoPromocional < menorPreco.preco
 
   function adicionarDecant() {
     if (!decant) return
@@ -59,7 +63,6 @@ export default function ProdutoCard({ id, nome, slug, marca, categoria, imagens,
           style={{ background: 'radial-gradient(ellipse at 50% 70%, #1e1a10 0%, #0d0d0d 100%)' }} />
 
         {imagem ? (
-          /* img nativo: browser busca direto, sem proxy Vercel */
           <img
             src={imagem}
             alt={nome}
@@ -76,6 +79,13 @@ export default function ProdutoCard({ id, nome, slug, marca, categoria, imagens,
         <span className="absolute top-2 left-2 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-[#0A0A0A]/80 text-[#C9A84C] border border-[#C9A84C]/30 z-10">
           {categoria === 'ARABE' ? 'Árabe' : 'Importado'}
         </span>
+
+        {/* Badge de desconto */}
+        {temDesconto && descontoPercent && (
+          <span className="absolute top-2 right-2 px-2 py-0.5 rounded-full text-[10px] font-bold bg-red-500 text-white z-10">
+            -{Math.round(descontoPercent)}%
+          </span>
+        )}
 
         {/* Reflexo sutil embaixo */}
         <div className="absolute bottom-0 left-0 right-0 h-16 z-10"
@@ -100,10 +110,19 @@ export default function ProdutoCard({ id, nome, slug, marca, categoria, imagens,
         </Link>
 
         {menorPreco && (
-          <p className="text-xs text-[#888]">
-            A partir de{' '}
-            <span className="text-[#C9A84C] font-bold text-sm">{formatPrice(menorPreco.preco)}</span>
-          </p>
+          <div className="flex items-baseline gap-2 flex-wrap">
+            <p className="text-xs text-[#888]">
+              A partir de{' '}
+              {temDesconto ? (
+                <>
+                  <span className="line-through text-[#555] mr-1">{formatPrice(menorPreco.preco)}</span>
+                  <span className="text-red-400 font-bold text-sm">{formatPrice(precoPromocional!)}</span>
+                </>
+              ) : (
+                <span className="text-[#C9A84C] font-bold text-sm">{formatPrice(menorPreco.preco)}</span>
+              )}
+            </p>
+          </div>
         )}
 
         {/* Botões */}

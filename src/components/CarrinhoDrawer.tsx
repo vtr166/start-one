@@ -5,11 +5,41 @@ import { formatPrice } from '@/lib/utils'
 import { X, Trash2, Plus, Minus, ShoppingBag, Tag } from 'lucide-react'
 import Image from 'next/image'
 import { useRouter } from 'next/navigation'
+import { useEffect, useRef } from 'react'
+
+const WA_NUMBER = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER ?? '5511999999999'
+const ABANDONO_MS = 10 * 60 * 1000 // 10 minutos
 
 export default function CarrinhoDrawer() {
   const { itens, aberto, fecharCarrinho, remover, alterarQuantidade, subtotal, desconto, total } = useCarrinho()
   const combo = calcularDescontoDecants(itens)
   const comboYara = calcularDescontoYara(itens)
+  const abandonoTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  // ── Recuperação de carrinho abandonado ──────────────────────
+  useEffect(() => {
+    if (itens.length === 0) return
+    // Quando fecha o drawer sem ir ao checkout, agenda mensagem de recuperação
+    if (!aberto) {
+      abandonoTimer.current = setTimeout(() => {
+        const nomes = itens.slice(0, 2).map(i => i.nomeProduto).join(', ')
+        const waNum = localStorage.getItem('cliente_whatsapp')
+        if (!waNum) return // não tem contato salvo, não pode enviar
+
+        const msg = `Olá! Você deixou ${nomes} no seu carrinho na Start One Imports. Posso te ajudar a finalizar o pedido? 😊`
+        // abre janela de recuperação apenas se o usuário ainda estiver na aba
+        if (!document.hidden) {
+          window.open(`https://wa.me/${WA_NUMBER}?text=${encodeURIComponent(msg)}`, '_blank')
+        }
+      }, ABANDONO_MS)
+    } else {
+      // Carrinho foi aberto — cancela timer
+      if (abandonoTimer.current) clearTimeout(abandonoTimer.current)
+    }
+    return () => {
+      if (abandonoTimer.current) clearTimeout(abandonoTimer.current)
+    }
+  }, [aberto, itens])
 
   // Quantos decants faltam para o próximo combo
   const totalDecants = itens.filter(i => i.isDecant).reduce((a, i) => a + i.quantidade, 0)

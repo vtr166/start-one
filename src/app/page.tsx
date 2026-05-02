@@ -9,6 +9,8 @@ import ProvasSociais from '@/components/ProvasSociais'
 import SecaoDecants from '@/components/SecaoDecants'
 import Link from 'next/link'
 import { Sparkles, ArrowRight } from 'lucide-react'
+import { getPromocoesAtivas, calcularPrecoPromocional } from '@/lib/promocoes'
+import ProgramaFidelidade from '@/components/ProgramaFidelidade'
 
 type SearchParams = Promise<{ categoria?: string; tipo?: string; genero?: string; q?: string }>
 
@@ -46,9 +48,26 @@ function SecaoPerfumes({
   )
 }
 
+// Helper: enriquece produto com dados de promoção
+type ProdutoComVariacoes = Awaited<ReturnType<typeof prisma.produto.findMany<{ include: { variacoes: true } }>>>[number]
+type Promocoes = Awaited<ReturnType<typeof getPromocoesAtivas>>
+function enriquecerComPromocao(produto: ProdutoComVariacoes, promocoes: Promocoes) {
+  const menorPreco = produto.variacoes.filter(v => v.estoque > 0).sort((a, b) => a.preco - b.preco)[0]
+  if (!menorPreco) return { ...produto, precoPromocional: null as number | null, descontoPercent: null as number | null }
+  const { preco: precoFinal, desconto, temDesconto } = calcularPrecoPromocional(
+    menorPreco.preco, produto.categoria, produto.genero, promocoes
+  )
+  return {
+    ...produto,
+    precoPromocional: temDesconto ? precoFinal : null as number | null,
+    descontoPercent: temDesconto ? (desconto / menorPreco.preco) * 100 : null as number | null,
+  }
+}
+
 // ─── Página principal ────────────────────────────────────────
 export default async function Home({ searchParams }: { searchParams: SearchParams }) {
   const { categoria, tipo, genero, q } = await searchParams
+  const promocoes = await getPromocoesAtivas()
 
   const isFiltrado = !!(categoria || tipo || genero || q)
 
@@ -94,6 +113,13 @@ export default async function Home({ searchParams }: { searchParams: SearchParam
         }),
       ])
 
+  // Enriquecer com promoções
+  const filtradosEnriquecidos = produtosFiltrados.map(p => enriquecerComPromocao(p, promocoes))
+  const masculinosEnriquecidos = masculinos.map(p => enriquecerComPromocao(p, promocoes))
+  const femininosEnriquecidos  = femininos.map(p => enriquecerComPromocao(p, promocoes))
+  const unissexEnriquecidos    = unissex.map(p => enriquecerComPromocao(p, promocoes))
+  const destaquesEnriquecidos  = destaques.map(p => enriquecerComPromocao(p, promocoes))
+
   // ── RESULTADO DE BUSCA/FILTRO ─────────────────────────────────
   if (isFiltrado) {
     const titulo =
@@ -112,14 +138,14 @@ export default async function Home({ searchParams }: { searchParams: SearchParam
           <h1 className="text-xl font-bold text-[#F5F5F5]">{titulo}</h1>
           <Link href="/" className="text-xs text-[#C9A84C] hover:underline">← Voltar</Link>
         </div>
-        {produtosFiltrados.length === 0 ? (
+        {filtradosEnriquecidos.length === 0 ? (
           <div className="text-center py-24 text-[#555]">
             <p className="text-lg mb-2">Nenhum produto encontrado</p>
             <Link href="/" className="text-sm text-[#C9A84C] hover:underline">Ver todos os perfumes</Link>
           </div>
         ) : (
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-            {produtosFiltrados.map((p) => <ProdutoCard key={p.id} {...p} />)}
+            {filtradosEnriquecidos.map((p) => <ProdutoCard key={p.id} {...p} />)}
           </div>
         )}
       </div>
@@ -139,14 +165,14 @@ export default async function Home({ searchParams }: { searchParams: SearchParam
       <BannerDiasMaes />
 
       {/* 4. Destaques */}
-      {destaques.length > 0 && (
+      {destaquesEnriquecidos.length > 0 && (
         <section className="max-w-7xl mx-auto px-4 pt-12 pb-4">
           <div className="flex items-center gap-2 mb-5">
             <Sparkles size={16} className="text-[#C9A84C]" />
             <h2 className="text-sm font-bold uppercase tracking-widest text-[#C9A84C]">Mais Vendidos</h2>
           </div>
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-            {destaques.map((p) => <ProdutoCard key={p.id} {...p} />)}
+            {destaquesEnriquecidos.map((p) => <ProdutoCard key={p.id} {...p} />)}
           </div>
         </section>
       )}
@@ -159,29 +185,32 @@ export default async function Home({ searchParams }: { searchParams: SearchParam
         titulo="Para Ele"
         emoji="🔵"
         href="/?genero=MASCULINO"
-        produtos={masculinos}
+        produtos={masculinosEnriquecidos}
       />
 
-      {/* 6. Femininos */}
+      {/* 7. Femininos */}
       <SecaoPerfumes
         titulo="Para Ela"
         emoji="🩷"
         href="/?genero=FEMININO"
-        produtos={femininos}
+        produtos={femininosEnriquecidos}
       />
 
-      {/* 7. Unissex */}
+      {/* 8. Unissex */}
       <SecaoPerfumes
         titulo="Unissex"
         emoji="⚪"
         href="/?genero=UNISSEX"
-        produtos={unissex}
+        produtos={unissexEnriquecidos}
       />
 
       {/* 8. Provas sociais */}
       <ProvasSociais />
 
-      {/* 9. CTA final */}
+      {/* 9. Programa de fidelidade */}
+      <ProgramaFidelidade />
+
+      {/* 10. CTA final */}
       <section className="max-w-7xl mx-auto px-4 pb-16">
         <div className="text-center py-16 border border-[#2A2A2A] rounded-2xl bg-[#111]">
           <p className="text-xs tracking-[0.3em] uppercase text-[#C9A84C] font-bold mb-3">Start One Imports</p>

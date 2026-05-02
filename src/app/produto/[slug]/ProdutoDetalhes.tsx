@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { ShoppingBag, Droplets, ChevronLeft } from 'lucide-react'
+import { ShoppingBag, Droplets, ChevronLeft, Share2, Truck, Star, X } from 'lucide-react'
 import Link from 'next/link'
 import { formatPrice } from '@/lib/utils'
 import { useCarrinho } from '@/store/carrinho'
@@ -11,6 +11,9 @@ type Variacao = {
   tipo: string
   volume: string
   preco: number
+  precoFinal: number
+  desconto: number
+  temDesconto: boolean
   estoque: number
   ativo: boolean
 }
@@ -30,19 +33,147 @@ type Produto = {
   variacoes: Variacao[]
 }
 
-export default function ProdutoDetalhes({ produto }: { produto: Produto }) {
+type Relacionado = {
+  id: string
+  nome: string
+  slug: string
+  marca: string
+  categoria: string
+  imagens: string[]
+  variacoes: { id: string; tipo: string; volume: string; preco: number; estoque: number }[]
+}
+
+type Props = {
+  produto: Produto
+  relacionados: Relacionado[]
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  promocoes: any[]
+}
+
+// ── Calculadora de frete ──────────────────────────────────────
+function CalculadoraFrete({ pesoKg }: { pesoKg: number }) {
+  const [cep, setCep] = useState('')
+  const [loading, setLoading] = useState(false)
+  const [opcoes, setOpcoes] = useState<{ nome: string; empresa: string; preco: number; prazo: number }[]>([])
+  const [erro, setErro] = useState('')
+
+  async function calcular() {
+    const cepLimpo = cep.replace(/\D/g, '')
+    if (cepLimpo.length !== 8) { setErro('CEP inválido'); return }
+    setLoading(true); setErro(''); setOpcoes([])
+    try {
+      const res = await fetch(`/api/frete?cep=${cepLimpo}&peso=${pesoKg}`)
+      const data = await res.json()
+      if (data.erro) { setErro(data.erro); return }
+      setOpcoes(data.opcoes ?? [])
+      if ((data.opcoes ?? []).length === 0) setErro('Nenhuma opção de frete disponível para este CEP.')
+    } catch {
+      setErro('Erro ao calcular frete.')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  return (
+    <div className="p-4 rounded-xl bg-[#111] border border-[#2A2A2A] space-y-3">
+      <p className="text-xs font-bold uppercase tracking-widest text-[#888] flex items-center gap-2">
+        <Truck size={13} /> Calcular frete
+      </p>
+      <div className="flex gap-2">
+        <input
+          type="text"
+          inputMode="numeric"
+          maxLength={9}
+          placeholder="00000-000"
+          value={cep}
+          onChange={e => setCep(e.target.value.replace(/(\d{5})(\d)/, '$1-$2').slice(0, 9))}
+          onKeyDown={e => e.key === 'Enter' && calcular()}
+          className="flex-1 bg-[#0A0A0A] border border-[#2A2A2A] rounded-lg px-3 py-2 text-sm text-[#F5F5F5] placeholder-[#444] focus:outline-none focus:border-[#C9A84C] transition-colors"
+        />
+        <button
+          onClick={calcular}
+          disabled={loading}
+          className="btn-outline-gold text-xs px-4 py-2 whitespace-nowrap"
+        >
+          {loading ? 'Calculando...' : 'Calcular'}
+        </button>
+      </div>
+      {erro && <p className="text-xs text-red-400">{erro}</p>}
+      {opcoes.length > 0 && (
+        <div className="space-y-2 pt-1">
+          {opcoes.map((op, i) => (
+            <div key={i} className="flex justify-between items-center text-sm">
+              <span className="text-[#888]">{op.empresa} {op.nome}</span>
+              <div className="text-right">
+                <span className="text-[#C9A84C] font-bold">{op.preco === 0 ? 'Grátis' : formatPrice(op.preco)}</span>
+                <span className="text-[#555] text-xs ml-2">({op.prazo}d úteis)</span>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
+// ── Prova social dinâmica ─────────────────────────────────────
+function ProvaSocialDinamica({ nome }: { nome: string }) {
+  // Números "vivos" — baseados no hash do nome para serem consistentes por produto
+  const hash = nome.split('').reduce((acc, c) => acc + c.charCodeAt(0), 0)
+  const vistas   = 7 + (hash % 19)     // 7–25
+  const vendidas = 3 + (hash % 12)     // 3–14
+
+  return (
+    <div className="flex flex-wrap gap-3">
+      <span className="text-[11px] text-[#888] bg-[#111] border border-[#2A2A2A] px-3 py-1.5 rounded-full flex items-center gap-1.5">
+        <span className="w-1.5 h-1.5 bg-green-400 rounded-full animate-pulse" />
+        {vistas} pessoas vendo agora
+      </span>
+      <span className="text-[11px] text-[#888] bg-[#111] border border-[#2A2A2A] px-3 py-1.5 rounded-full">
+        🔥 {vendidas} vendas esta semana
+      </span>
+    </div>
+  )
+}
+
+// ── Card de produto relacionado ───────────────────────────────
+function RelacionadoCard({ produto }: { produto: Relacionado }) {
+  const menor = produto.variacoes.filter(v => v.estoque > 0).sort((a, b) => a.preco - b.preco)[0]
+  return (
+    <Link href={`/produto/${produto.slug}`} className="card-dark flex flex-col overflow-hidden group">
+      <div className="relative overflow-hidden" style={{ aspectRatio: '1/1' }}>
+        <div className="absolute inset-0" style={{ background: 'radial-gradient(ellipse at 50% 70%, #1e1a10 0%, #0d0d0d 100%)' }} />
+        {produto.imagens[0] ? (
+          <img src={produto.imagens[0]} alt={produto.nome} className="absolute inset-0 w-full h-full object-contain p-3 transition-transform duration-500 group-hover:scale-105" loading="lazy" />
+        ) : (
+          <div className="absolute inset-0 flex items-center justify-center text-[#333]"><ShoppingBag size={32} /></div>
+        )}
+      </div>
+      <div className="p-3">
+        <p className="text-[10px] text-[#C9A84C] font-semibold uppercase tracking-widest mb-0.5">{produto.marca}</p>
+        <p className="text-xs font-bold text-[#F5F5F5] line-clamp-2 leading-snug group-hover:text-[#C9A84C] transition-colors">{produto.nome}</p>
+        {menor && <p className="text-xs text-[#888] mt-1">A partir de <span className="text-[#C9A84C] font-bold">{formatPrice(menor.preco)}</span></p>}
+      </div>
+    </Link>
+  )
+}
+
+// ── Componente principal ──────────────────────────────────────
+export default function ProdutoDetalhes({ produto, relacionados }: Props) {
   const { adicionar } = useCarrinho()
   const [imagemAtiva, setImagemAtiva] = useState(0)
-  const [variacaoSelecionada, setVariacaoSelecionada] = useState<Variacao>(
-    produto.variacoes[0]
-  )
+  const [variacaoSelecionada, setVariacaoSelecionada] = useState<Variacao>(produto.variacoes[0])
   const [adicionado, setAdicionado] = useState(false)
+  const [compartilhado, setCompartilhado] = useState(false)
 
   const generoLabel: Record<string, string> = {
     MASCULINO: 'Masculino',
     FEMININO: 'Feminino',
     UNISSEX: 'Unissex',
   }
+
+  // Peso estimado para frete (frasco ~0.4kg, decant ~0.1kg)
+  const pesoEstimado = variacaoSelecionada?.tipo === 'FRASCO' ? 0.4 : 0.1
 
   function handleAdicionar() {
     if (!variacaoSelecionada) return
@@ -51,12 +182,21 @@ export default function ProdutoDetalhes({ produto }: { produto: Produto }) {
       produtoId: produto.id,
       nomeProduto: produto.nome,
       nomeVariacao: `${variacaoSelecionada.tipo === 'DECANT' ? 'Decant' : 'Frasco'} ${variacaoSelecionada.volume}`,
-      preco: variacaoSelecionada.preco,
+      preco: variacaoSelecionada.precoFinal,
       quantidade: 1,
       imagem: produto.imagens[0] ?? '',
     })
     setAdicionado(true)
     setTimeout(() => setAdicionado(false), 2000)
+  }
+
+  function handleCompartilhar() {
+    const url = typeof window !== 'undefined' ? window.location.href : ''
+    const texto = `Olha esse perfume incrível na Start One Imports: *${produto.nome}* - ${url}`
+    const waUrl = `https://wa.me/?text=${encodeURIComponent(texto)}`
+    window.open(waUrl, '_blank')
+    setCompartilhado(true)
+    setTimeout(() => setCompartilhado(false), 2000)
   }
 
   return (
@@ -120,6 +260,9 @@ export default function ProdutoDetalhes({ produto }: { produto: Produto }) {
             </div>
           </div>
 
+          {/* Prova social dinâmica */}
+          <ProvaSocialDinamica nome={produto.nome} />
+
           <p className="text-sm text-[#888] leading-relaxed">{produto.descricao}</p>
 
           {/* Notas olfativas */}
@@ -171,7 +314,14 @@ export default function ProdutoDetalhes({ produto }: { produto: Produto }) {
                     {v.tipo === 'DECANT' ? 'Decant' : 'Frasco'} {v.volume}
                   </span>
                   <span className={variacaoSelecionada?.id === v.id ? 'text-[#C9A84C]' : 'text-[#F5F5F5]'}>
-                    {formatPrice(v.preco)}
+                    {v.temDesconto ? (
+                      <>
+                        <span className="line-through text-[#555] text-[10px] mr-1">{formatPrice(v.preco)}</span>
+                        <span className="text-red-400">{formatPrice(v.precoFinal)}</span>
+                      </>
+                    ) : (
+                      formatPrice(v.preco)
+                    )}
                   </span>
                   {v.estoque <= 0 && <span className="text-[10px] text-orange-400">Sob encomenda</span>}
                 </button>
@@ -183,9 +333,19 @@ export default function ProdutoDetalhes({ produto }: { produto: Produto }) {
           {variacaoSelecionada && (
             <div className="pt-2">
               <div className="flex items-end justify-between mb-4">
-                <p className="text-3xl font-bold text-[#C9A84C]">
-                  {formatPrice(variacaoSelecionada.preco)}
-                </p>
+                <div>
+                  {variacaoSelecionada.temDesconto ? (
+                    <div className="flex items-baseline gap-2">
+                      <p className="text-lg line-through text-[#555]">{formatPrice(variacaoSelecionada.preco)}</p>
+                      <p className="text-3xl font-bold text-red-400">{formatPrice(variacaoSelecionada.precoFinal)}</p>
+                      <span className="text-xs bg-red-500 text-white px-2 py-0.5 rounded-full font-bold">
+                        -{Math.round((variacaoSelecionada.desconto / variacaoSelecionada.preco) * 100)}%
+                      </span>
+                    </div>
+                  ) : (
+                    <p className="text-3xl font-bold text-[#C9A84C]">{formatPrice(variacaoSelecionada.preco)}</p>
+                  )}
+                </div>
                 {variacaoSelecionada.estoque <= 0 ? (
                   <span className="text-xs font-bold text-orange-400 bg-orange-400/10 px-2 py-1 rounded-lg border border-orange-400/20">
                     Sob encomenda
@@ -204,17 +364,44 @@ export default function ProdutoDetalhes({ produto }: { produto: Produto }) {
                   </span>
                 )}
               </div>
-              <button
-                onClick={handleAdicionar}
-                className="btn-gold w-full flex items-center justify-center gap-2 text-sm"
-              >
-                <ShoppingBag size={16} />
-                {adicionado ? 'Adicionado ao carrinho ✓' : 'Adicionar ao Carrinho'}
-              </button>
+
+              <div className="flex gap-2">
+                <button
+                  onClick={handleAdicionar}
+                  className="btn-gold flex-1 flex items-center justify-center gap-2 text-sm"
+                >
+                  <ShoppingBag size={16} />
+                  {adicionado ? 'Adicionado ao carrinho ✓' : 'Adicionar ao Carrinho'}
+                </button>
+                <button
+                  onClick={handleCompartilhar}
+                  title="Compartilhar no WhatsApp"
+                  className="flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl border border-[#2A2A2A] text-[#888] hover:text-green-400 hover:border-green-400/40 transition-colors text-xs"
+                >
+                  <Share2 size={15} />
+                  {compartilhado ? 'Enviado!' : 'Compartilhar'}
+                </button>
+              </div>
             </div>
           )}
+
+          {/* Calculadora de frete */}
+          <CalculadoraFrete pesoKg={pesoEstimado} />
         </div>
       </div>
+
+      {/* ── Produtos relacionados ─────────────────────────────── */}
+      {relacionados.length > 0 && (
+        <section className="mt-16">
+          <div className="flex items-center gap-2 mb-5">
+            <Star size={15} className="text-[#C9A84C]" />
+            <h2 className="text-sm font-bold uppercase tracking-widest text-[#C9A84C]">Você também pode gostar</h2>
+          </div>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            {relacionados.map((r) => <RelacionadoCard key={r.id} produto={r} />)}
+          </div>
+        </section>
+      )}
     </div>
   )
 }
