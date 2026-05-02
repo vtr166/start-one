@@ -10,15 +10,12 @@ import {
   ChevronDown, Check, X, Sparkles,
 } from 'lucide-react'
 
-/* ─── Constantes (configuráveis via env vars na Vercel) ──────
-   NEXT_PUBLIC_KIT_PRECO_UNIT  → preço individual do decant (padrão: 35)
-   NEXT_PUBLIC_KIT_PRECO_KIT   → preço final do kit com 3 decants (padrão: 89.90)
-   ─────────────────────────────────────────────────────────── */
+/* ─── Constantes ──────────────────────────────────────────── */
 const QTD_KIT      = 3
-const PRECO_UNIT   = Number(process.env.NEXT_PUBLIC_KIT_PRECO_UNIT  ?? 35)
-const PRECO_NORMAL = PRECO_UNIT * QTD_KIT
-const PRECO_KIT    = Number(process.env.NEXT_PUBLIC_KIT_PRECO_KIT   ?? 89.90)
-const ECONOMIA     = PRECO_NORMAL - PRECO_KIT
+const PRECO_UNIT   = 35       // R$ por decant — fixo para todos na landing
+const PRECO_NORMAL = PRECO_UNIT * QTD_KIT   // R$105
+const PRECO_KIT    = 89.90
+const ECONOMIA     = PRECO_NORMAL - PRECO_KIT  // R$15,10
 const CUPOM_CODIGO = 'KITDESCOBERTA'
 
 /* ─── Imagens fallback por produto ───────────────────────── */
@@ -159,7 +156,7 @@ function DecantCard({
           </p>
         )}
         <p className="text-xs font-black text-amber-400 mt-2">
-          {formatPrice(decant.preco)} · 5ml
+          {formatPrice(PRECO_UNIT)} · 5ml
         </p>
       </div>
     </button>
@@ -205,7 +202,7 @@ export default function KitDescobertaClient({ decants }: { decants: DecantInfo[]
         produtoId:    d.produtoId,
         nomeProduto:  d.nome,
         nomeVariacao: 'Decant 5ml',
-        preco:        d.preco,
+        preco:        PRECO_UNIT,  // sempre R$35 na landing, independente do banco
         quantidade:   1,
         imagem:       d.imagem || IMAGENS_FALLBACK[d.nome] || '',
         // isDecant: false → não aciona o desconto combo 3x2
@@ -416,7 +413,7 @@ export default function KitDescobertaClient({ decants }: { decants: DecantInfo[]
                       <p className="text-xs font-bold text-white truncate">{d.nome}</p>
                       <p className="text-[10px] text-[#666]">{d.marca} · Decant 5ml</p>
                     </div>
-                    <p className="text-xs font-bold text-amber-400 shrink-0">{formatPrice(d.preco)}</p>
+                    <p className="text-xs font-bold text-amber-400 shrink-0">{formatPrice(PRECO_UNIT)}</p>
                     <button onClick={() => toggleDecant(d.variacaoId)}
                       className="text-[#444] hover:text-red-400 transition-colors">
                       <X size={14} />
