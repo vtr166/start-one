@@ -166,7 +166,7 @@ function DecantCard({
 /* ─── Componente principal ────────────────────────────────── */
 export default function KitDescobertaClient({ decants }: { decants: DecantInfo[] }) {
   const router = useRouter()
-  const { adicionar, itens } = useCarrinho()
+  const { adicionar, fecharCarrinho, itens } = useCarrinho()
 
   const [selecionados, setSelecionados] = useState<string[]>([])
   const [adicionando, setAdicionando]   = useState(false)
@@ -204,13 +204,16 @@ export default function KitDescobertaClient({ decants }: { decants: DecantInfo[]
           preco:        d.preco,
           quantidade:   1,
           imagem:       d.imagem || IMAGENS_FALLBACK[d.nome] || '',
-          isDecant:     true,
+          // isDecant: false → não aciona o desconto combo 3x2
+          // o cupom KITDESCOBERTA já contempla o desconto exclusivo do kit
+          isDecant:     false,
         })
       }
     }
 
-    // Pequeno delay para o Zustand processar, depois redireciona com cupom
-    await new Promise(r => setTimeout(r, 350))
+    // Fecha o drawer que o adicionar() abre automaticamente e redireciona
+    fecharCarrinho()
+    await new Promise(r => setTimeout(r, 150))
     router.push(`/checkout?cupom=${CUPOM_CODIGO}`)
   }
 
