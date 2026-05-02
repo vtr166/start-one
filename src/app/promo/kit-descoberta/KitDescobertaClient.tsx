@@ -10,12 +10,15 @@ import {
   ChevronDown, Check, X, Sparkles,
 } from 'lucide-react'
 
-/* ─── Constantes ──────────────────────────────────────────── */
+/* ─── Constantes (configuráveis via env vars na Vercel) ──────
+   NEXT_PUBLIC_KIT_PRECO_UNIT  → preço individual do decant (padrão: 35)
+   NEXT_PUBLIC_KIT_PRECO_KIT   → preço final do kit com 3 decants (padrão: 89.90)
+   ─────────────────────────────────────────────────────────── */
 const QTD_KIT      = 3
-const PRECO_UNIT   = 35          // R$ por decant (individual)
-const PRECO_NORMAL = PRECO_UNIT * QTD_KIT   // R$105
-const PRECO_KIT    = 89.90
-const ECONOMIA     = PRECO_NORMAL - PRECO_KIT  // R$15,10
+const PRECO_UNIT   = Number(process.env.NEXT_PUBLIC_KIT_PRECO_UNIT  ?? 35)
+const PRECO_NORMAL = PRECO_UNIT * QTD_KIT
+const PRECO_KIT    = Number(process.env.NEXT_PUBLIC_KIT_PRECO_KIT   ?? 89.90)
+const ECONOMIA     = PRECO_NORMAL - PRECO_KIT
 const CUPOM_CODIGO = 'KITDESCOBERTA'
 
 /* ─── Imagens fallback por produto ───────────────────────── */
