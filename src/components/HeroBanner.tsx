@@ -87,15 +87,27 @@ export default function HeroBanner() {
   const [saindo, setSaindo]     = useState(false)
   const [prog, setProg]         = useState(0)
   const [bannersDB, setBannersDB] = useState<BannerDB[]>([])
+  const [totalBanners, setTotalBanners] = useState<number | null>(null)
 
-  // Busca banners do banco — usa fallback hardcoded se vazio
+  // Busca banners do banco
+  // total > 0 = admin configurou banners (mesmo que todos ocultos)
+  // total === 0 = nunca configurou → usa fallback hardcoded
   useEffect(() => {
-    fetch('/api/banners').then(r => r.json()).then((data: BannerDB[]) => {
-      if (Array.isArray(data) && data.length > 0) setBannersDB(data)
-    }).catch(() => {})
+    fetch('/api/banners')
+      .then(r => r.json())
+      .then((data: { banners: BannerDB[]; total: number }) => {
+        setTotalBanners(data.total ?? 0)
+        if (Array.isArray(data.banners) && data.banners.length > 0) {
+          setBannersDB(data.banners)
+        }
+      })
+      .catch(() => {})
   }, [])
 
-  // Slides ativos: banco ou hardcoded
+  // Slides ativos:
+  // - Se admin ainda não configurou (total === null ou 0) → usa hardcoded
+  // - Se admin configurou mas ocultou todos → não mostra nada
+  const usarFallback = totalBanners === null || totalBanners === 0
   const slidesAtivos = bannersDB.length > 0
     ? bannersDB.map(b => ({
         id:      b.id,
@@ -116,7 +128,10 @@ export default function HeroBanner() {
           b.stat3n ? { n: b.stat3n, label: b.stat3label ?? '' } : null,
         ].filter(Boolean) as { n: string; label: string }[],
       }))
-    : SLIDES
+    : usarFallback ? SLIDES : []
+
+  // Se admin ocultou todos os banners, não renderiza nada
+  if (!usarFallback && slidesAtivos.length === 0) return null
 
   const trocar = useCallback((next: number) => {
     if (next === idx) return
