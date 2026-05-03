@@ -44,7 +44,7 @@ export default function CarrinhoDrawer() {
 
   // Quantos decants faltam para o próximo combo
   const totalDecants = itens.filter(i => i.isDecant).reduce((a, i) => a + i.quantidade, 0)
-  const faltamParaCombo = totalDecants < 3 ? 3 - totalDecants : totalDecants < 5 ? 5 - totalDecants : 0
+  const faltamParaCombo = totalDecants < 4 ? 4 - totalDecants : totalDecants < 6 ? 6 - totalDecants : 0
   const router = useRouter()
 
   if (!aberto) return null

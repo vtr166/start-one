@@ -31,13 +31,13 @@ export default function SecaoDecants() {
             <div className="flex gap-3 justify-center md:justify-start flex-wrap">
               <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-[#C9A84C]/10 border border-[#C9A84C]/30">
                 <Gift size={14} className="text-[#C9A84C]" />
-                <span className="text-xs font-bold text-[#C9A84C]">Compre 3, Pague 2</span>
-                <span className="text-[10px] bg-[#C9A84C] text-[#0A0A0A] font-black px-1.5 py-0.5 rounded-full">33% OFF</span>
+                <span className="text-xs font-bold text-[#C9A84C]">Compre 4, Pague 3</span>
+                <span className="text-[10px] bg-[#C9A84C] text-[#0A0A0A] font-black px-1.5 py-0.5 rounded-full">25% OFF</span>
               </div>
               <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-green-500/10 border border-green-500/30">
                 <Gift size={14} className="text-green-400" />
-                <span className="text-xs font-bold text-green-400">Compre 5, Pague 3</span>
-                <span className="text-[10px] bg-green-500 text-white font-black px-1.5 py-0.5 rounded-full">40% OFF</span>
+                <span className="text-xs font-bold text-green-400">Compre 6, Pague 4</span>
+                <span className="text-[10px] bg-green-500 text-white font-black px-1.5 py-0.5 rounded-full">33% OFF</span>
               </div>
             </div>
           </div>

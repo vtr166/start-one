@@ -14,14 +14,14 @@ type Produto = {
 
 const combos = [
   {
-    id: '3x2', label: 'Kit 3 Pague 2', qtd: 3, gratis: 1, badge: '33% OFF',
-    desc: 'Escolha 3 decants — o mais barato é por nossa conta.',
+    id: '4x3', label: 'Kit 4 Pague 3', qtd: 4, gratis: 1, badge: '25% OFF',
+    desc: 'Escolha 4 decants — o mais barato é por nossa conta.',
     cor: 'border-[#C9A84C]/40 bg-[#C9A84C]/5',
     badgeCor: 'bg-[#C9A84C] text-[#0A0A0A]',
   },
   {
-    id: '5x3', label: 'Kit 5 Pague 3', qtd: 5, gratis: 2, badge: '40% OFF',
-    desc: 'Escolha 5 decants — os 2 mais baratos são grátis!',
+    id: '6x4', label: 'Kit 6 Pague 4', qtd: 6, gratis: 2, badge: '33% OFF',
+    desc: 'Escolha 6 decants — os 2 mais baratos são grátis!',
     cor: 'border-green-500/40 bg-green-500/5',
     badgeCor: 'bg-green-500 text-white',
   },
@@ -35,9 +35,9 @@ export default function DecantsCatalogo({ produtos }: { produtos: Produto[] }) {
 
   const combo = calcularDescontoDecants(itens)
   const totalDecants = itens.filter(i => i.isDecant).reduce((a, i) => a + i.quantidade, 0)
-  const faltam3 = Math.max(0, 3 - totalDecants)
-  const faltam5 = Math.max(0, 5 - totalDecants)
-  const progressoAtual = totalDecants >= 5 ? 5 : totalDecants >= 3 ? 3 : totalDecants
+  const faltam4 = Math.max(0, 4 - totalDecants)
+  const faltam6 = Math.max(0, 6 - totalDecants)
+  const progressoAtual = totalDecants >= 6 ? 6 : totalDecants >= 4 ? 4 : totalDecants
 
   const generos = ['TODOS', 'MASCULINO', 'FEMININO', 'UNISSEX']
   const produtosFiltrados = filtroGenero === 'TODOS'
@@ -130,7 +130,7 @@ export default function DecantsCatalogo({ produtos }: { produtos: Produto[] }) {
               </span>
             ) : (
               <span className="text-xs text-[#888]">
-                {faltam3 > 0 ? `+${faltam3} para Kit 3 Pague 2` : `+${faltam5} para Kit 5 Pague 3`}
+                {faltam4 > 0 ? `+${faltam4} para Kit 4 Pague 3` : `+${faltam6} para Kit 6 Pague 4`}
               </span>
             )}
           </div>
