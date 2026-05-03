@@ -19,10 +19,11 @@ export default function ConditionalLayout({
   extras: ReactNode
 }) {
   const pathname = usePathname()
-  const isPromo = pathname?.startsWith('/promo/')
+  const isPromo  = pathname?.startsWith('/promo/')
+  const isAdmin  = pathname?.startsWith('/admin')
 
-  if (isPromo) {
-    // Landing pages: sem header, footer ou pop-ups
+  if (isPromo || isAdmin) {
+    // Landing pages e painel admin: sem header, footer ou pop-ups
     return <>{children}</>
   }
 

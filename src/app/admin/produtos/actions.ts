@@ -42,11 +42,39 @@ export async function salvarProduto(formData: FormData) {
         notasTopo, notasCoracao, notasBase, destaque, imagens, slug,
       },
     })
-    // Recria variações
-    await prisma.variacao.deleteMany({ where: { produtoId: id } })
-    await prisma.variacao.createMany({
-      data: variacoes.map((v) => ({ ...v, produtoId: id })),
-    })
+
+    // Atualiza variações com segurança (sem deletar as que têm pedidos)
+    const existentes = await prisma.variacao.findMany({ where: { produtoId: id } })
+
+    for (const v of variacoes) {
+      const match = existentes.find(e => e.tipo === v.tipo && e.volume === v.volume)
+      if (match) {
+        // Atualiza a variação existente
+        await prisma.variacao.update({
+          where: { id: match.id },
+          data: { preco: v.preco, estoque: v.estoque },
+        })
+      } else {
+        // Cria nova variação
+        await prisma.variacao.create({
+          data: { ...v, produtoId: id },
+        })
+      }
+    }
+
+    // Remove variações que saíram do form (só se não tiverem pedidos)
+    const tiposVolumesForm = variacoes.map(v => `${v.tipo}|${v.volume}`)
+    const paraRemover = existentes.filter(
+      e => !tiposVolumesForm.includes(`${e.tipo}|${e.volume}`)
+    )
+    for (const v of paraRemover) {
+      try {
+        await prisma.variacao.delete({ where: { id: v.id } })
+      } catch {
+        // Tem pedidos vinculados — zera o estoque em vez de deletar
+        await prisma.variacao.update({ where: { id: v.id }, data: { estoque: 0 } })
+      }
+    }
   } else {
     // Criação
     await prisma.produto.create({

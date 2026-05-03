@@ -7,7 +7,10 @@ export const metadata: Metadata = {
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   return (
     <div className="min-h-screen bg-[#0A0A0A]">
-      {children}
+      {/* pt-14 no mobile para compensar a top bar fixa do AdminNav */}
+      <div className="pt-14 md:pt-0">
+        {children}
+      </div>
     </div>
   )
 }
