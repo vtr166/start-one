@@ -86,8 +86,9 @@ export default function HeroBanner() {
   const [idx, setIdx]           = useState(0)
   const [saindo, setSaindo]     = useState(false)
   const [prog, setProg]         = useState(0)
-  const [bannersDB, setBannersDB] = useState<BannerDB[]>([])
+  const [bannersDB, setBannersDB]     = useState<BannerDB[]>([])
   const [totalBanners, setTotalBanners] = useState<number | null>(null)
+  const [carregando, setCarregando]   = useState(true)
 
   // Busca banners do banco
   // total > 0 = admin configurou banners (mesmo que todos ocultos)
@@ -101,13 +102,17 @@ export default function HeroBanner() {
           setBannersDB(data.banners)
         }
       })
-      .catch(() => {})
+      .catch(() => { setTotalBanners(0) }) // erro na API → usa fallback
+      .finally(() => setCarregando(false))
   }, [])
 
+  // Enquanto carrega, não mostra nada (evita flash do fallback)
+  if (carregando) return <div className="w-full h-[420px] md:h-[540px] bg-[#0A0A0A]" />
+
   // Slides ativos:
-  // - Se admin ainda não configurou (total === null ou 0) → usa hardcoded
+  // - Se admin ainda não configurou (total === 0) → usa hardcoded
   // - Se admin configurou mas ocultou todos → não mostra nada
-  const usarFallback = totalBanners === null || totalBanners === 0
+  const usarFallback = totalBanners === 0
   const slidesAtivos = bannersDB.length > 0
     ? bannersDB.map(b => ({
         id:      b.id,
