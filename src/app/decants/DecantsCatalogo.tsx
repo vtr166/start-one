@@ -14,13 +14,13 @@ type Produto = {
 
 const combos = [
   {
-    id: '4x3', label: 'Kit 4 Pague 3', qtd: 4, gratis: 1, badge: '25% OFF',
+    id: '4x3', label: 'Compre 4 Pague 3', qtd: 4, gratis: 1, badge: '25% OFF',
     desc: 'Escolha 4 decants — o mais barato é por nossa conta.',
     cor: 'border-[#C9A84C]/40 bg-[#C9A84C]/5',
     badgeCor: 'bg-[#C9A84C] text-[#0A0A0A]',
   },
   {
-    id: '6x4', label: 'Kit 6 Pague 4', qtd: 6, gratis: 2, badge: '33% OFF',
+    id: '6x4', label: 'Compre 6 Pague 4', qtd: 6, gratis: 2, badge: '33% OFF',
     desc: 'Escolha 6 decants — os 2 mais baratos são grátis!',
     cor: 'border-green-500/40 bg-green-500/5',
     badgeCor: 'bg-green-500 text-white',
