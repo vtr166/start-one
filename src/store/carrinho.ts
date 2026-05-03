@@ -59,23 +59,21 @@ export function calcularDescontoDecants(itens: ItemCarrinho[]): DescontoCombo | 
   }
 
   const total = decants.length
-  if (total < 3) return null
+  if (total < 4) return null
 
   decants.sort((a, b) => a - b) // menor primeiro (serão grátis)
 
-  let gratis = 0
-  let economia = 0
-
-  // Quantos combos 5x3 cabem?
-  const combos5 = Math.floor(total / 5)
-  // No que sobra, quantos combos 3x2 cabem?
-  const restante5 = total - combos5 * 5
-  const combos3 = Math.floor(restante5 / 3)
+  // Quantos combos 6 Ganhe 2 cabem?
+  const combos6 = Math.floor(total / 6)
+  // No que sobra, quantos combos 4 Ganhe 1 cabem?
+  const restante6 = total - combos6 * 6
+  const combos4 = Math.floor(restante6 / 4)
 
   // Grátis: os mais baratos
-  gratis = combos5 * 2 + combos3 * 1
+  const gratis = combos6 * 2 + combos4 * 1
 
   // Economia: soma dos 'gratis' mais baratos
+  let economia = 0
   for (let i = 0; i < gratis; i++) {
     economia += decants[i]
   }
@@ -83,14 +81,14 @@ export function calcularDescontoDecants(itens: ItemCarrinho[]): DescontoCombo | 
   if (economia === 0) return null
 
   const descricao =
-    combos5 > 0 && combos3 > 0
-      ? `${combos5}× Combo 5 Pague 3 + ${combos3}× Combo 3 Pague 2`
-      : combos5 > 0
-      ? combos5 > 1 ? `${combos5}× Combo 5 Pague 3` : 'Combo 5 Pague 3'
-      : combos3 > 1 ? `${combos3}× Combo 3 Pague 2` : 'Combo 3 Pague 2'
+    combos6 > 0 && combos4 > 0
+      ? `${combos6}× Combo 6 Ganhe 2 + ${combos4}× Combo 4 Ganhe 1`
+      : combos6 > 0
+      ? combos6 > 1 ? `${combos6}× Combo 6 Ganhe 2` : 'Combo 6 Ganhe 2'
+      : combos4 > 1 ? `${combos4}× Combo 4 Ganhe 1` : 'Combo 4 Ganhe 1'
 
   return {
-    tipo: combos5 > 0 ? 'COMBO_5X3' : 'COMBO_3X2',
+    tipo: combos6 > 0 ? 'COMBO_5X3' : 'COMBO_3X2',
     descricao,
     economia,
   }
