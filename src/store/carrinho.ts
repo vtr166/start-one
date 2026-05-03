@@ -82,10 +82,10 @@ export function calcularDescontoDecants(itens: ItemCarrinho[]): DescontoCombo | 
 
   const descricao =
     combos6 > 0 && combos4 > 0
-      ? `${combos6}× Combo 6 Ganhe 2 + ${combos4}× Combo 4 Ganhe 1`
+      ? `${combos6}× Combo 6 Pague 4 + ${combos4}× Combo 4 Pague 3`
       : combos6 > 0
-      ? combos6 > 1 ? `${combos6}× Combo 6 Ganhe 2` : 'Combo 6 Ganhe 2'
-      : combos4 > 1 ? `${combos4}× Combo 4 Ganhe 1` : 'Combo 4 Ganhe 1'
+      ? combos6 > 1 ? `${combos6}× Combo 6 Pague 4` : 'Combo 6 Pague 4'
+      : combos4 > 1 ? `${combos4}× Combo 4 Pague 3` : 'Combo 4 Pague 3'
 
   return {
     tipo: combos6 > 0 ? 'COMBO_5X3' : 'COMBO_3X2',
