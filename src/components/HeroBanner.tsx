@@ -91,29 +91,20 @@ export default function HeroBanner() {
   const [carregando, setCarregando]   = useState(true)
 
   // Busca banners do banco
-  // total > 0 = admin configurou banners (mesmo que todos ocultos)
-  // total === 0 = nunca configurou → usa fallback hardcoded
   useEffect(() => {
     fetch('/api/banners')
       .then(r => r.json())
       .then((data: { banners: BannerDB[]; total: number }) => {
         setTotalBanners(data.total ?? 0)
-        if (Array.isArray(data.banners) && data.banners.length > 0) {
-          setBannersDB(data.banners)
-        }
+        if (Array.isArray(data.banners) && data.banners.length > 0) setBannersDB(data.banners)
       })
-      .catch(() => { setTotalBanners(0) }) // erro na API → usa fallback
+      .catch(() => { setTotalBanners(0) })
       .finally(() => setCarregando(false))
   }, [])
 
-  // Enquanto carrega, não mostra nada (evita flash do fallback)
-  if (carregando) return <div className="w-full h-[420px] md:h-[540px] bg-[#0A0A0A]" />
-
-  // Slides ativos:
-  // - Se admin ainda não configurou (total === 0) → usa hardcoded
-  // - Se admin configurou mas ocultou todos → não mostra nada
-  const usarFallback = totalBanners === 0
-  const slidesAtivos = bannersDB.length > 0
+  // Computa slides (vazio enquanto carrega)
+  const usarFallback = !carregando && totalBanners === 0
+  const slidesAtivos = carregando ? [] : bannersDB.length > 0
     ? bannersDB.map(b => ({
         id:      b.id,
         foto:    b.imagemUrl,
@@ -135,18 +126,14 @@ export default function HeroBanner() {
       }))
     : usarFallback ? SLIDES : []
 
-  // Se admin ocultou todos os banners, não renderiza nada
-  if (!usarFallback && slidesAtivos.length === 0) return null
-
+  // Todos os hooks ANTES de qualquer return condicional
   const trocar = useCallback((next: number) => {
     if (next === idx) return
     setSaindo(true)
     setTimeout(() => { setIdx(next); setSaindo(false); setProg(0) }, 450)
   }, [idx])
 
-  useEffect(() => {
-    setIdx(0) // reset ao trocar fonte
-  }, [bannersDB.length])
+  useEffect(() => { setIdx(0) }, [bannersDB.length])
 
   useEffect(() => {
     const total = slidesAtivos.length
@@ -161,6 +148,10 @@ export default function HeroBanner() {
     }, TICK)
     return () => clearInterval(t)
   }, [idx, trocar, slidesAtivos.length])
+
+  // Returns condicionais DEPOIS de todos os hooks
+  if (carregando) return <div className="w-full h-[420px] md:h-[540px] bg-[#0A0A0A]" />
+  if (!usarFallback && slidesAtivos.length === 0) return null
 
   const s = slidesAtivos[idx] ?? slidesAtivos[0]
   if (!s) return null
